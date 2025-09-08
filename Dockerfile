@@ -1,12 +1,21 @@
-FROM node:18 AS build
+# Use an official Node.js runtime as base image
+FROM node:18-alpine
+
+# Set working directory
 WORKDIR /app
+
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --production
+
+# Copy the rest of your app
 COPY . .
 
-FROM node:18-slim
-WORKDIR /app
-COPY --from=build /app .
-RUN apt-get update && apt-get install -y ffmpeg
+# Optional: Add FFmpeg if needed for media processing
+RUN apk add --no-cache ffmpeg
+
+# Expose port (adjust if your app uses a different one)
 EXPOSE 3000
-CMD ["node", "server.js"]
+
+# Start the app
+CMD ["node", "index.js"]
