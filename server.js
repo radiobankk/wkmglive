@@ -6,7 +6,7 @@ const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static"); // ✅ Added
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.use(cors());
 
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
@@ -20,7 +20,7 @@ let audioStream = new PassThrough();
 let activeClients = 0;
 
 // 🎧 FFmpeg pipeline with WKMG branding
-const ffmpegProcess = spawn(ffmpegPath, [ // ✅ Replaced "ffmpeg" with ffmpegPath
+const ffmpegProcess = spawn(ffmpegPath, [
 "-re",
 "-timeout", "5000000",
 "-rw_timeout", "15000000",
@@ -107,6 +107,19 @@ source: streamUrl,
 session: traceLabel,
 timestamp: new Date().toISOString(),
 activeClients
+});
+});
+
+// 🔊 MP3 stream health check
+app.get("/mp3-health", (req, res) => {
+const isStreamActive = !audioStream.destroyed && ffmpegProcess.exitCode === null;
+
+res.json({
+status: isStreamActive ? "OK" : "ERROR",
+streamActive: isStreamActive,
+activeClients,
+session: traceLabel,
+timestamp: new Date().toISOString()
 });
 });
 
