@@ -6,7 +6,10 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 
-const ffmpegPath = path.join("C:", "ffmpeg", "bin", "ffmpeg.exe");
+const ffmpegDir = path.join("C:", "ffmpeg", "bin");
+console.log(`📂 FFmpeg directory: ${ffmpegDir}`);
+
+const ffmpegPath = path.join(ffmpegDir, "ffmpeg.exe");
 
 if (!fs.existsSync(ffmpegPath)) {
 console.error(`❌ FFmpeg binary not found at: ${ffmpegPath}`);
