@@ -1,21 +1,20 @@
-# Use an official Node.js runtime as base image
-FROM node:18-alpine
+# Use official Node.js LTS base image
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files first for caching
 COPY package*.json ./
-RUN npm install --production
 
-# Copy the rest of your app
+# Install only production dependencies
+RUN npm ci --omit=dev
+
+# Copy the rest of the app
 COPY . .
 
-# Optional: Add FFmpeg if needed for media processing
-RUN apk add --no-cache ffmpeg
-
-# Expose port (adjust if your app uses a different one)
+# Expose port
 EXPOSE 3000
 
-# Start the app
-CMD ["node", "index.js"]
+# Start the server
+CMD ["node", "server.js"]
