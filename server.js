@@ -3,18 +3,7 @@ const { PassThrough } = require("stream");
 const { spawn } = require("child_process");
 const crypto = require("crypto");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
-
-const ffmpegDir = path.join("C:", "ffmpeg", "bin");
-console.log(`📂 FFmpeg directory: ${ffmpegDir}`);
-
-const ffmpegPath = path.join(ffmpegDir, "ffmpeg.exe");
-
-if (!fs.existsSync(ffmpegPath)) {
-console.error(`❌ FFmpeg binary not found at: ${ffmpegPath}`);
-process.exit(1);
-}
+const ffmpegPath = require("ffmpeg-static"); // ✅ Added
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +20,7 @@ let audioStream = new PassThrough();
 let activeClients = 0;
 
 // 🎧 FFmpeg pipeline with WKMG branding
-const ffmpegProcess = spawn(ffmpegPath, [
+const ffmpegProcess = spawn(ffmpegPath, [ // ✅ Replaced "ffmpeg" with ffmpegPath
 "-re",
 "-timeout", "5000000",
 "-rw_timeout", "15000000",
