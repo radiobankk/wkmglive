@@ -1,0 +1,33 @@
+{
+  "name": "wkmglive",
+  "version": "1.0.0",
+  "description": "  #\u0000 \u0000L\u0000i\u0000v\u0000e\u0000 \u0000M\u0000e\u0000t\u0000a\u0000d\u0000a\u0000t\u0000a\u0000 \u0000S\u0000t\u0000r\u0000e\u0000a\u0000m\u0000\r\u0000 \u0000",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "update-metadata": "node autoUpdateMetadata.js",
+    "dev": "nodemon server.js",
+    "test": "echo \"No tests yet, but the stream is alive.\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "moment-timezone": "^0.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radiobankk/live-metadata-stream.git"
+  },
+  "bugs": {
+    "url": "https://github.com/radiobankk/live-metadata-stream/issues"
+  },
+  "homepage": "https://github.com/radiobankk/live-metadata-stream#readme"
+}

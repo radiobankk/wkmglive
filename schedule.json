@@ -1,0 +1,34 @@
+{
+"schedule": {
+"Monday": [
+{ "time": "03:10", "title": "CBS News Roundup" },
+{ "time": "04:30", "title": "CBS News Mornings" },
+{ "time": "05:00", "title": "News 6 Mornings at 5:00am" },
+{ "time": "06:00", "title": "News 6 Mornings at 6:00am" },
+{ "time": "07:00", "title": "CBS Mornings" },
+{ "time": "09:00", "title": "Entertainment Tonight" },
+{ "time": "09:30", "title": "Inside Edition" },
+{ "time": "10:00", "title": "Let's Make a Deal" },
+{ "time": "11:00", "title": "The Price Is Right" },
+{ "time": "12:00", "title": "News 6 at Noon" },
+{ "time": "12:30", "title": "The Young and the Restless" },
+{ "time": "13:30", "title": "The Bold and the Beautiful" },
+{ "time": "14:00", "title": "Beyond the Gates" },
+{ "time": "15:00", "title": "The Drew Barrymore Show" },
+{ "time": "16:00", "title": "News 6 at 4pm" },
+{ "time": "17:00", "title": "News 6 at 5pm" },
+{ "time": "18:00", "title": "News 6 at 6pm" },
+{ "time": "18:30", "title": "CBS Evening News" },
+{ "time": "19:00", "title": "Entertainment Tonight" },
+{ "time": "19:30", "title": "Inside Edition" },
+{ "time": "20:00", "title": "Local Programming" },
+{ "time": "23:00", "title": "News 6 At 11pm" }
+],
+"Tuesday": "same as Monday",
+"Wednesday": "same as Monday",
+"Thursday": "same as Monday",
+"Friday": "same as Monday",
+"Saturday": [],
+"Sunday": []
+}
+}

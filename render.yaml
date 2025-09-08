@@ -1,0 +1,5 @@
+services:
+- type: web
+name: wkmglive
+env: docker
+plan: free
