@@ -4,7 +4,7 @@ const { spawn } = require("child_process");
 const crypto = require("crypto");
 const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static");
-
+const streamUrl = "https://wkmglive.onrender.com/wkmglive.mp3";
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
