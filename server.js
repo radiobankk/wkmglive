@@ -93,8 +93,8 @@ ffmpegProcess.stderr.on("data", data => {
 console.log(`📣 [${traceLabel}] FFmpeg stderr:`, data.toString());
 });
 
-ffmpegProcess.on("close", code => {
-console.log(`❌ [${traceLabel}] FFmpeg exited with code ${code}`);
+ffmpegProcess.on("exit", (code, signal) => {
+console.log(`⚠️ FFmpeg exited with code: ${code}, signal: ${signal}`);
 setTimeout(() => restartFFmpegWithMetadata(getCurrentProgramMetadata()), 5000);
 });
 }
