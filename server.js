@@ -97,7 +97,7 @@ setTimeout(() => restartFFmpegWithMetadata(getCurrentProgramMetadata()), 5000);
 });
 }
 
-startFFmpeg();
+restartFFmpegWithMetadata(getCurrentProgramMetadata());
 
 // 🔊 WKMG stream endpoint
 app.get("/stream-wkmg.mp3", (req, res) => {
