@@ -122,7 +122,6 @@ console.log(`🛑 [${traceLabel}] SIGTERM received. Terminating...`);
 audioStream.end();
 process.exit();
 });
-
 app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
 console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
