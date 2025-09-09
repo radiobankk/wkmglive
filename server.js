@@ -228,6 +228,11 @@ restartFFmpegWithMetadata(meta);
 }
 }, 30000); // check every 30s
 
+setInterval(() => {
+const meta = getCurrentProgramMetadata();
+restartFFmpegWithMetadata(meta); // force metadata refresh
+}, 60000); // every 1 minute
+
 // ✅ Start server
 app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
