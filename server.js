@@ -202,13 +202,17 @@ process.exit();
 // ✅ Metadata watcher loop
 let lastTitle = "";
 
+let lastRestartTime = 0;
+
 setInterval(() => {
+const now = Date.now();
 const meta = getCurrentProgramMetadata();
-if (meta.title !== lastTitle) {
+if (meta.title !== lastTitle && now - lastRestartTime > 60000) {
 lastTitle = meta.title;
+lastRestartTime = now;
 restartFFmpegWithMetadata(meta);
 }
-}, 60000); // every 60 seconds
+}, 30000); // check every 30s
 
 // ✅ Start server
 app.listen(PORT, HOST, () => {
