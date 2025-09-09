@@ -63,7 +63,12 @@ let ffmpegProcess;
 let activeClients = 0;
 
 // 🎧 FFmpeg pipeline with WKMG branding
-function startFFmpeg() {
+function restartFFmpegWithMetadata(meta) {
+if (ffmpegProcess) {
+ffmpegProcess.kill("SIGKILL");
+console.log(`🔁 Restarting FFmpeg with new metadata: ${meta.title}`);
+}
+
 ffmpegProcess = spawn(ffmpegPath, [
 "-re",
 "-timeout", "5000000",
@@ -74,9 +79,9 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-c:a", "libmp3lame",
 "-b:a", "192k",
 "-f", "mp3",
-"-metadata", "title=currentSlot.title",
-"-metadata", "artist=WKMG-DT1 NEWS 6",
-"-metadata", "comment=Live MP3 Relay / 192K",
+"-metadata", `title=${meta.title}`,
+"-metadata", `artist=${meta.artist}`,
+"-metadata", `comment=${meta.comment}`,
 "pipe:1"
 ]);
 
@@ -88,7 +93,7 @@ console.log(`📣 [${traceLabel}] FFmpeg stderr:`, data.toString());
 
 ffmpegProcess.on("close", code => {
 console.log(`❌ [${traceLabel}] FFmpeg exited with code ${code}`);
-setTimeout(startFFmpeg, 5000); // Retry after delay
+setTimeout(() => restartFFmpegWithMetadata(getCurrentProgramMetadata()), 5000);
 });
 }
 
@@ -192,6 +197,18 @@ audioStream.end();
 process.exit();
 });
 
+// ✅ Metadata watcher loop
+let lastTitle = "";
+
+setInterval(() => {
+const meta = getCurrentProgramMetadata();
+if (meta.title !== lastTitle) {
+lastTitle = meta.title;
+restartFFmpegWithMetadata(meta);
+}
+}, 60000); // every 60 seconds
+
+// ✅ Start server
 app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
 console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
