@@ -8,13 +8,14 @@ const fullSchedule = require("./schedule.json").schedule;
 
 function getCurrentProgramMetadata() {
 const now = new Date();
-const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const today = dayNames[now.getDay()];
+now.setHours(now.getHours() - 4); // Adjust for EDT if server is in UTC
 const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
 
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const today = dayNames[now.getDay()];
 let todaySchedule = fullSchedule[today];
 
-// Handle "same as Monday" references
+// Handle "same as Monday"
 if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
 const refDay = todaySchedule.split("same as ")[1];
 todaySchedule = fullSchedule[refDay];
@@ -22,17 +23,20 @@ todaySchedule = fullSchedule[refDay];
 
 if (!Array.isArray(todaySchedule)) return defaultMetadata();
 
-const sortedSlots = todaySchedule
-.filter(slot => slot.time <= currentTime)
-.sort((a, b) => b.time.localeCompare(a.time));
+// Loop through slots and find the one where currentTime falls between this and the next
+for (let i = 0; i < todaySchedule.length; i++) {
+const currentSlot = todaySchedule[i];
+const nextSlot = todaySchedule[i + 1];
 
-if (sortedSlots.length > 0) {
-const currentSlot = sortedSlots[0];
+if (
+currentTime >= currentSlot.time &&
+(!nextSlot || currentTime < nextSlot.time)
+) {
 return {
 title: currentSlot.title,
-artist: "WKMG-DT1 NEWS 6",
 comment: `Now Playing: ${currentSlot.title}`
 };
+}
 }
 
 return defaultMetadata();
@@ -41,7 +45,6 @@ return defaultMetadata();
 function defaultMetadata() {
 return {
 title: "WKMG-DT1 NEWS 6",
-artist: "WKMG-DT1 NEWS 6",
 comment: "Live MP3 Relay / 192K"
 };
 }
@@ -80,7 +83,6 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-b:a", "192k",
 "-f", "mp3",
 "-metadata", `title=${meta.title}`,
-"-metadata", `artist=${meta.artist}`,
 "-metadata", `comment=${meta.comment}`,
 "pipe:1"
 ]);
