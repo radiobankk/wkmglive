@@ -7,6 +7,7 @@ const ffmpegPath = require("ffmpeg-static"); // ✅ Added
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const HOST = "52.15.118.168"; // ✅ Added host binding
 app.use(cors());
 
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
@@ -110,19 +111,6 @@ activeClients
 });
 });
 
-// 🔊 MP3 stream health check
-app.get("/mp3-health", (req, res) => {
-const isStreamActive = !audioStream.destroyed && ffmpegProcess.exitCode === null;
-
-res.json({
-status: isStreamActive ? "OK" : "ERROR",
-streamActive: isStreamActive,
-activeClients,
-session: traceLabel,
-timestamp: new Date().toISOString()
-});
-});
-
 // 🧼 Graceful shutdown
 process.on("SIGINT", () => {
 console.log(`🛑 [${traceLabel}] SIGINT received. Shutting down...`);
@@ -136,8 +124,9 @@ audioStream.end();
 process.exit();
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
-console.log(`➡️ http://localhost:${10000}/stream-wkmg.mp3`);
-console.log(`➡️ http://localhost:${10000}/wkmglive.mp3`);
+console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
+console.log(`➡️ http://${HOST}:${PORT}/wkmglive.mp3`);
+console.log(`🛠️ Server is listening on port ${PORT}`);
 });
