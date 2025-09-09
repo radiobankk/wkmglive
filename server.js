@@ -3,10 +3,11 @@ const { PassThrough } = require("stream");
 const { spawn } = require("child_process");
 const crypto = require("crypto");
 const cors = require("cors");
-const ffmpegPath = require("ffmpeg-static"); // ✅ Added
+const ffmpegPath = require("ffmpeg-static");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 app.use(cors());
 
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
@@ -17,10 +18,12 @@ const traceLabel = `WKMG-Session-${sessionId}-${timestamp}`;
 console.log(`🧠 Starting WKMG stream trace: ${traceLabel}`);
 
 let audioStream = new PassThrough();
+let ffmpegProcess;
 let activeClients = 0;
 
 // 🎧 FFmpeg pipeline with WKMG branding
-const ffmpegProcess = spawn(ffmpegPath, [
+function startFFmpeg() {
+ffmpegProcess = spawn(ffmpegPath, [
 "-re",
 "-timeout", "5000000",
 "-rw_timeout", "15000000",
@@ -45,7 +48,11 @@ console.log(`📣 [${traceLabel}] FFmpeg stderr:`, data.toString());
 
 ffmpegProcess.on("close", code => {
 console.log(`❌ [${traceLabel}] FFmpeg exited with code ${code}`);
+setTimeout(startFFmpeg, 5000); // Retry after delay
 });
+}
+
+startFFmpeg();
 
 // 🔊 WKMG stream endpoint
 app.get("/stream-wkmg.mp3", (req, res) => {
@@ -60,12 +67,17 @@ res.writeHead(200, {
 "Connection": "keep-alive"
 });
 
+req.setTimeout(0); // Disable default timeout
 audioStream.pipe(res);
 
 req.on("close", () => {
 activeClients--;
 console.log(`❌ [${traceLabel}] Client disconnected: ${req.ip} | ID: ${clientId}`);
 console.log(`👥 Active clients: ${activeClients}`);
+});
+
+res.on("error", () => {
+console.log(`⚠️ [${traceLabel}] Stream error for client ${clientId}`);
 });
 });
 
@@ -82,12 +94,17 @@ res.writeHead(200, {
 "Connection": "keep-alive"
 });
 
+req.setTimeout(0);
 audioStream.pipe(res);
 
 req.on("close", () => {
 activeClients--;
 console.log(`❌ [${traceLabel}] /wkmglive.mp3 client disconnected: ${req.ip} | ID: ${clientId}`);
 console.log(`👥 Active clients: ${activeClients}`);
+});
+
+res.on("error", () => {
+console.log(`⚠️ [${traceLabel}] Stream error for client ${clientId}`);
 });
 });
 
@@ -110,6 +127,19 @@ activeClients
 });
 });
 
+// 🔊 MP3 stream health check
+app.get("/mp3-health", (req, res) => {
+const isStreamActive = !audioStream.destroyed && ffmpegProcess.exitCode === null;
+
+res.json({
+status: isStreamActive ? "OK" : "ERROR",
+streamActive: isStreamActive,
+activeClients,
+session: traceLabel,
+timestamp: new Date().toISOString()
+});
+});
+
 // 🧼 Graceful shutdown
 process.on("SIGINT", () => {
 console.log(`🛑 [${traceLabel}] SIGINT received. Shutting down...`);
@@ -122,9 +152,9 @@ console.log(`🛑 [${traceLabel}] SIGTERM received. Terminating...`);
 audioStream.end();
 process.exit();
 });
+
 app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
 console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
 console.log(`➡️ http://${HOST}:${PORT}/wkmglive.mp3`);
-console.log(`🛠️ Server is listening on port ${PORT}`);
 });
