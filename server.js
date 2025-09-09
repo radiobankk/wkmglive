@@ -5,6 +5,41 @@ const crypto = require("crypto");
 const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static");
 
+const fullSchedule = require("./schedule.json").schedule;
+
+function getCurrentProgramMetadata() {
+const now = new Date();
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const today = dayNames[now.getDay()];
+const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
+let todaySchedule = fullSchedule[today];
+
+// Handle "same as Monday" references
+if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
+const refDay = todaySchedule.split("same as ")[1];
+todaySchedule = fullSchedule[refDay];
+}
+
+const times = Object.keys(todaySchedule || {}).sort().reverse();
+
+for (const time of times) {
+if (currentTime >= time) {
+return {
+title: todaySchedule[time],
+artist: "WKMG-DT1 NEWS 6",
+comment: `Now Playing: ${todaySchedule[time]}`
+};
+}
+}
+
+return {
+title: "WKMG-DT1 NEWS 6",
+artist: "WKMG-DT1",
+comment: "Live MP3 Relay / 192K"
+};
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -113,13 +148,11 @@ app.get("/health", (req, res) => {
 res.status(200).send("OK");
 });
 
-// 📊 Metadata endpoint
+// 🟣 Metadata endpoint (schedule-aware)
 app.get("/metadata", (req, res) => {
+const meta = getCurrentProgramMetadata();
 res.json({
-title: "WKMG-DT1 NEWS 6",
-artist: "WKMG-DT1 NEWS 6",
-album: "WKMG-DT1 NEWS 6",
-comment: "Live MP3 Relay / 192K",
+...meta,
 source: streamUrl,
 session: traceLabel,
 timestamp: new Date().toISOString(),
