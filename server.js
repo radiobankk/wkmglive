@@ -6,8 +6,7 @@ const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static"); // ✅ Added
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-const HOST = "52.15.118.168"; // ✅ Added host binding
+const PORT = process.env.PORT || 3000;
 app.use(cors());
 
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
