@@ -68,8 +68,8 @@ let activeClients = 0;
 // 🎧 FFmpeg pipeline with WKMG branding
 function restartFFmpegWithMetadata(meta) {
 if (ffmpegProcess) {
+console.log(`🔁 Killing FFmpeg to restart with new metadata: ${meta.title}`);
 ffmpegProcess.kill("SIGKILL");
-console.log(`🔁 Restarting FFmpeg with new metadata: ${meta.title}`);
 }
 
 ffmpegProcess = spawn(ffmpegPath, [
@@ -78,8 +78,8 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-rw_timeout", "15000000",
 "-loglevel", "verbose",
 "-i", streamUrl,
-"-vn",
-"-c:a", "libmp3lame",
+"-vn", // ignore video
+"-acodec", "libmp3lame",
 "-b:a", "192k",
 "-f", "mp3",
 "-metadata", `title=${meta.title}`,
@@ -90,12 +90,11 @@ ffmpegProcess = spawn(ffmpegPath, [
 ffmpegProcess.stdout.pipe(audioStream, { end: false });
 
 ffmpegProcess.stderr.on("data", data => {
-console.log(`📣 [${traceLabel}] FFmpeg stderr:`, data.toString());
+console.log(`⚠️ [${traceLabel}] FFmpeg stderr:`, data.toString());
 });
 
 ffmpegProcess.on("exit", (code, signal) => {
-console.log(`⚠️ FFmpeg exited with code: ${code}, signal: ${signal}`);
-setTimeout(() => restartFFmpegWithMetadata(getCurrentProgramMetadata()), 5000);
+console.log(`❌ FFmpeg exited with code: ${code}, signal: ${signal}`);
 });
 }
 
