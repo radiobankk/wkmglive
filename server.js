@@ -138,6 +138,6 @@ process.exit();
 
 app.listen(PORT, () => {
 console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
-console.log(`➡️ http://localhost:${PORT}/stream-wkmg.mp3`);
-console.log(`➡️ http://localhost:${PORT}/wkmglive.mp3`);
+console.log(`➡️ http://localhost:${10000}/stream-wkmg.mp3`);
+console.log(`➡️ http://localhost:${10000}/wkmglive.mp3`);
 });
