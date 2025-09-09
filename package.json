@@ -24,10 +24,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/radiobankk/live-metadata-stream.git"
+    "url": "git+https://github.com/radiobankk/wkmglive.git"
   },
   "bugs": {
-    "url": "https://github.com/radiobankk/live-metadata-stream/issues"
+    "url": "https://github.com/radiobankk/wkmglive/issues"
   },
-  "homepage": "https://github.com/radiobankk/live-metadata-stream#readme"
+  "homepage": "https://github.com/radiobankk/wkmglive#readme"
 }

@@ -1,0 +1,1 @@
+ffmpeg -i "http://208.89.99.124:5004/auto/v6.1" -vn -c:a libmp3lame -b:a 192k wkmglive.mp3
