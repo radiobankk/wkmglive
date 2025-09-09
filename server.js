@@ -30,7 +30,7 @@ if (sortedSlots.length > 0) {
 const currentSlot = sortedSlots[0];
 return {
 title: currentSlot.title,
-artist: "WKMG-DT1",
+artist: "WKMG-DT1 NEWS 6",
 comment: `Now Playing: ${currentSlot.title}`
 };
 }
@@ -74,7 +74,7 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-c:a", "libmp3lame",
 "-b:a", "192k",
 "-f", "mp3",
-"-metadata", "title=WKMG-DT1 NEWS 6",
+"-metadata", "title=currentSlot.title",
 "-metadata", "artist=WKMG-DT1 NEWS 6",
 "-metadata", "comment=Live MP3 Relay / 192K",
 "pipe:1"
