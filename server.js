@@ -4,7 +4,48 @@ const { spawn } = require("child_process");
 const crypto = require("crypto");
 const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static");
-const streamUrl = "https://wkmglive.onrender.com/wkmglive.mp3";
+const fullSchedule = require("./schedule.json").schedule;
+
+function getCurrentProgramMetadata() {
+const now = new Date();
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const today = dayNames[now.getDay()];
+const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
+let todaySchedule = fullSchedule[today];
+
+// Handle "same as Monday" references
+if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
+const refDay = todaySchedule.split("same as ")[1];
+todaySchedule = fullSchedule[refDay];
+}
+
+if (!Array.isArray(todaySchedule)) return defaultMetadata();
+
+const sortedSlots = todaySchedule
+.filter(slot => slot.time <= currentTime)
+.sort((a, b) => b.time.localeCompare(a.time));
+
+if (sortedSlots.length > 0) {
+const currentSlot = sortedSlots[0];
+return {
+title: currentSlot.title,
+artist: "WKMG-DT1",
+comment: `Now Playing: ${currentSlot.title}`
+};
+}
+
+return defaultMetadata();
+}
+
+function defaultMetadata() {
+return {
+title: "WKMG-DT1 NEWS 6",
+artist: "WKMG-DT1 NEWS 6",
+comment: "Live MP3 Relay / 192K"
+};
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -22,36 +63,32 @@ let ffmpegProcess;
 let activeClients = 0;
 
 // 🎧 FFmpeg pipeline with WKMG branding
-function startFFmpeg(meta) {
-if (ffmpegProcess) {
-ffmpegProcess.kill("SIGKILL");
-console.log(`🔁 Restarting FFmpeg with new metadata: ${meta.title}`);
-}
-
+function startFFmpeg() {
 ffmpegProcess = spawn(ffmpegPath, [
+"-re",
 "-timeout", "5000000",
-"-rw_timeout", "1500000",
+"-rw_timeout", "15000000",
 "-loglevel", "verbose",
-"-i", streamURL,
+"-i", streamUrl,
+"-vn",
 "-c:a", "libmp3lame",
 "-b:a", "192k",
 "-f", "mp3",
-"-metadata", `title=${meta.title}`,
-"-metadata", `artist=${meta.artist}`,
-"-metadata", `album=${meta.artist}`,
-"-metadata", `comment=${meta.comment}`,
+"-metadata", "title=WKMG-DT1 NEWS 6",
+"-metadata", "artist=WKMG-DT1 NEWS 6",
+"-metadata", "comment=Live MP3 Relay / 192K",
 "pipe:1"
 ]);
 
 ffmpegProcess.stdout.pipe(audioStream, { end: false });
 
 ffmpegProcess.stderr.on("data", data => {
-console.log(`🔊 [${traceLabel}] FFmpeg stderr:`, data.toString());
+console.log(`📣 [${traceLabel}] FFmpeg stderr:`, data.toString());
 });
 
 ffmpegProcess.on("close", code => {
-console.log(`🔊 [${traceLabel}] FFmpeg exited with code ${code}`);
-setTimeout(() => startFFmpeg(getCurrentProgramMetadata()), 5000);
+console.log(`❌ [${traceLabel}] FFmpeg exited with code ${code}`);
+setTimeout(startFFmpeg, 5000); // Retry after delay
 });
 }
 
@@ -116,13 +153,12 @@ app.get("/health", (req, res) => {
 res.status(200).send("OK");
 });
 
-// 📊 Metadata endpoint
+// 📊 Metadata endpoint (dynamic)
 app.get("/metadata", (req, res) => {
+const meta = getCurrentProgramMetadata();
 res.json({
-title: "WKMG-DT1 NEWS 6",
-artist: "WKMG-DT1 NEWS 6",
-album: "WKMG-DT1 NEWS 6",
-comment: "Live MP3 Relay / 192K",
+...meta,
+album: meta.artist,
 source: streamUrl,
 session: traceLabel,
 timestamp: new Date().toISOString(),
