@@ -231,7 +231,7 @@ restartFFmpegWithMetadata(meta);
 setInterval(() => {
 const meta = getCurrentProgramMetadata();
 restartFFmpegWithMetadata(meta); // force metadata refresh
-}, 60000); // every 1 minute
+}, 60000); // every 1 second
 
 // ✅ Start server
 app.listen(PORT, HOST, () => {
