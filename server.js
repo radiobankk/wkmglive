@@ -54,7 +54,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 app.use(cors());
 
-const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
+const streamUrl = "https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8";
 const sessionId = crypto.randomUUID();
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const traceLabel = `WKMG-Session-${sessionId}-${timestamp}`;
