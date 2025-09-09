@@ -201,14 +201,29 @@ process.exit();
 
 // ✅ Metadata watcher loop
 let lastTitle = "";
-
 let lastRestartTime = 0;
 
 setInterval(() => {
 const now = Date.now();
 const meta = getCurrentProgramMetadata();
-if (meta.title !== lastTitle && now - lastRestartTime > 60000) {
+
+const isStreamActive = !audioStream.destroyed && ffmpegProcess.exitCode === null;
+
+// 🧠 Restart only if metadata changed AND stream is healthy AND cooldown passed
+if (
+meta.title !== lastTitle &&
+isStreamActive &&
+now - lastRestartTime > 60000
+) {
+console.log(`🔁 Title changed: "${lastTitle}" → "${meta.title}"`);
 lastTitle = meta.title;
+lastRestartTime = now;
+restartFFmpegWithMetadata(meta);
+}
+
+// 🛡️ If stream is dead, force restart
+if (!isStreamActive) {
+console.log(`🛑 Stream inactive. Restarting FFmpeg...`);
 lastRestartTime = now;
 restartFFmpegWithMetadata(meta);
 }
