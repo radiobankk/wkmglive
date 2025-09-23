@@ -54,7 +54,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 app.use(cors());
 
-const streamUrl = "http://206.212.244.71:8080/4wVQA7/625159/121144";
+const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
 const sessionId = crypto.randomUUID();
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const traceLabel = `WKMG-Session-${sessionId}-${timestamp}`;
