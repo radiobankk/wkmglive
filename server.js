@@ -12,7 +12,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 app.use(cors());
 
-const STATION_NAME = "WKMG News 6";
+const STATION_NAME = "WKMG-DT1";
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
 const artworkUrl = "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png?ex=68f25baf&is=68f10a2f&hm=373514a772bf78ebfcd1b4c6316a637a5eeac0005cf050907a151cdfadebf689&";
 
@@ -65,7 +65,7 @@ return defaultMetadata();
 function defaultMetadata() {
 return (
 lastMetadata || {
-title: "WKMG-DT1 NEWS 6",
+title: "News 6",
 artist: STATION_NAME,
 comment: "Live MP3 Relay / 192K",
 artwork: artworkUrl // 👈 Default artwork too
