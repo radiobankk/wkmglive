@@ -1,37 +1,72 @@
-const fs = require('fs');
-const path = require('path');
-const moment = require('moment-timezone');
-const scheduleData = require('./schedule.json');
+const fs = require("fs");
+const path = require("path");
+const schedule = require("./schedule.json").schedule;
 
-// Force Eastern Time
-const now = moment().tz('America/New_York');
-const currentDay = now.format('dddd'); // e.g. "Thursday"
-const currentTime = now.format('HH:mm'); // e.g. "17:56"
+const metadataFile = path.join(__dirname, "currentMetadata.json");
+const stationName = "WKMG-DT1 NEWS 6";
+const defaultArtwork = "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png?ex=68f25baf&is=68f10a2f&hm=373514a772bf78ebfcd1b4c6316a637a5eeac0005cf050907a151cdfadebf689&";
 
-// Resolve "same as Monday"
-const schedule = scheduleData.schedule;
-['Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach(day => {
-if (schedule[day] === 'same as Monday') {
-schedule[day] = schedule['Monday'];
+// Function to get current program based on schedule
+function getCurrentProgram() {
+const now = new Date();
+now.setHours(now.getHours() - 4); // Adjust for EDT if server in UTC
+const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const today = dayNames[now.getDay()];
+let todaySchedule = schedule[today];
+
+// Handle "same as Monday"
+if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
+const refDay = todaySchedule.split("same as ")[1];
+todaySchedule = schedule[refDay];
 }
-});
 
-const todaySchedule = Array.isArray(schedule[currentDay]) ? schedule[currentDay] : [];
+if (!Array.isArray(todaySchedule)) {
+return {
+title: stationName,
+artwork: defaultArtwork
+};
+}
 
-let activeTitle = "Live Stream";
-for (const show of todaySchedule) {
-if (show.time <= currentTime) {
-activeTitle = show.title;
+for (let i = 0; i < todaySchedule.length; i++) {
+const currentSlot = todaySchedule[i];
+const nextSlot = todaySchedule[i + 1];
+
+if (currentTime >= currentSlot.time && (!nextSlot || currentTime < nextSlot.time)) {
+return {
+title: currentSlot.title,
+artwork: currentSlot.artwork || defaultArtwork
+};
 }
 }
+
+return {
+title: stationName,
+artwork: defaultArtwork
+};
+}
+
+// Function to write metadata JSON
+function updateMetadataFile() {
+const currentProgram = getCurrentProgram();
 
 const metadata = {
-title: activeTitle,
-artist: "WKMG-DT1 NEWS 6",
-timestamp: now.format('YYYY-MM-DD HH:mm:ss')
+title: currentProgram.title,
+album: stationName, // Show station at bottom
+artwork: currentProgram.artwork,
+timestamp: new Date().toISOString()
 };
 
-const metadataPath = path.join(__dirname, 'metadata.json');
-fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+fs.writeFile(metadataFile, JSON.stringify(metadata, null, 2), (err) => {
+if (err) console.error("Error writing metadata:", err);
+});
+}
 
-console.log(`[${metadata.timestamp}] Metadata updated:`, metadata);
+// Update every 1 second
+setInterval(updateMetadataFile, 1000);
+
+// Initial write
+updateMetadataFile();
+
+console.log("✅ Metadata updater running, updating every 1 second.");
