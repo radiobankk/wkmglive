@@ -1,10 +1,11 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const moment = require("moment-timezone");
 const { PassThrough } = require("stream");
 const { spawn } = require("child_process");
+const crypto = require("crypto");
 const ffmpegPath = require("ffmpeg-static");
+const moment = require("moment-timezone");
 const cors = require("cors");
 
 const app = express();
@@ -12,115 +13,154 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 app.use(cors());
 
-// Stream source
-const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
-const sessionId = Math.floor(Math.random() * 1000000);
-const traceLabel = "WKMG-LIVE";
-const startTimestamp = new Date().toISOString();
+// --- File paths ---
+const SCHEDULE_FILE = path.join(__dirname, "schedule.json");
+const ARTWORK_FILE = path.join(__dirname, "artwork.json");
+const METADATA_FILE = path.join(__dirname, "currentMetadata.json");
 
+// --- Stream setup ---
+const STREAM_URL = "http://208.89.99.124:5004/auto/v6.1";
 let audioStream = new PassThrough();
-let ffmpegProcess;
-let currentMetadata = {};
-let listenerCount = 0;
+let ffmpegProcess = null;
 
-// Load schedule for auto-detect
-const scheduleData = require("./schedule.json");
-
-// 🔍 Determine active show directly from schedule
-function getActiveShowFromSchedule() {
-const now = moment().tz("America/New_York");
-const currentDay = now.format("dddd");
-const currentTime = now.format("HH:mm");
-
-const schedule = scheduleData.schedule;
-// Resolve "same as Monday"
-["Tuesday", "Wednesday", "Thursday", "Friday"].forEach(day => {
-if (schedule[day] === "same as Monday") {
-schedule[day] = schedule["Monday"];
-}
-});
-
-const todaySchedule = Array.isArray(schedule[currentDay]) ? schedule[currentDay] : [];
-let activeShow = "WKMG-DT1 Live Stream";
-
-for (let i = 0; i < todaySchedule.length; i++) {
-const show = todaySchedule[i];
-const nextShow = todaySchedule[i + 1];
-if (currentTime >= show.time && (!nextShow || currentTime < nextShow.time)) {
-activeShow = show.title;
-break;
-}
-}
-
-return {
-title: We're Be Right Back!,
-artist: "WKMG-DT1",
-comment: "ClickOrlando / WKMG-DT1",
-artwork: "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png?ex=68f25baf&is=68f10a2f&hm=373514a772bf78ebfcd1b4c6316a637a5eeac0005cf050907a151cdfadebf689&",
-timestamp: now.format("YYYY-MM-DD HH:mm:ss")
+// --- Default metadata ---
+let currentMetadata = {
+title: "Live Stream",
+artist: "WKMG-DT1 NEWS 6",
+artwork: "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png",
+comment: "Live MP3 Relay / 192K"
 };
+
+// --- Helpers ---
+function log(message) {
+console.log(`[${new Date().toISOString()}] ${message}`);
 }
 
-// 🎧 Start FFmpeg stream
+function loadSchedule() {
+try {
+return require(SCHEDULE_FILE).schedule || {};
+} catch (err) {
+log(`⚠️ Schedule load error: ${err.message}`);
+return {};
+}
+}
+
+function loadArtwork() {
+try {
+return require(ARTWORK_FILE);
+} catch (err) {
+log(`⚠️ Artwork load error: ${err.message}`);
+return {};
+}
+}
+
+// Convert "HH:mm" to total minutes since midnight
+function timeToMinutes(timeStr) {
+const [hh, mm] = timeStr.split(":").map(Number);
+return hh * 60 + mm;
+}
+
+// --- Determine active show with previous-day late-night handling ---
+function getActiveShow(schedule) {
+const now = moment().tz("America/New_York");
+const nowMinutes = now.hours() * 60 + now.minutes();
+const currentDay = now.format("dddd");
+const previousDay = now.clone().subtract(1, "day").format("dddd");
+
+// Resolve "same as Monday"
+let todaySchedule = schedule[currentDay];
+if (["Tuesday","Wednesday","Thursday","Friday"].includes(currentDay) && todaySchedule === "same as Monday") {
+todaySchedule = schedule["Monday"];
+}
+todaySchedule = Array.isArray(todaySchedule) ? todaySchedule : [];
+
+let prevSchedule = schedule[previousDay];
+if (["Tuesday","Wednesday","Thursday","Friday"].includes(previousDay) && prevSchedule === "same as Monday") {
+prevSchedule = schedule["Monday"];
+}
+prevSchedule = Array.isArray(prevSchedule) ? prevSchedule : [];
+
+// Include previous day's late-night shows (after 00:00 but before first show of today)
+const firstTodayTime = todaySchedule[0] ? timeToMinutes(todaySchedule[0].time) : 180; // default 03:00
+const prevLateNight = prevSchedule.filter(s => timeToMinutes(s.time) < firstTodayTime);
+
+const combinedSchedule = [...prevLateNight, ...todaySchedule]
+.map(s => ({ ...s, minutes: timeToMinutes(s.time) }))
+.sort((a, b) => a.minutes - b.minutes);
+
+// Find last show before now
+let activeShow = { title: "Live Stream" };
+for (const show of combinedSchedule) {
+if (show.minutes <= nowMinutes) activeShow = show;
+}
+
+return activeShow;
+}
+
+// --- Update metadata based on schedule & artwork ---
+function updateMetadata() {
+const schedule = loadSchedule();
+const artworkData = loadArtwork();
+const activeShow = getActiveShow(schedule);
+
+const matchedArtwork = artworkData[activeShow.title];
+const artworkUrl = matchedArtwork ? matchedArtwork.artwork : currentMetadata.artwork;
+
+currentMetadata = {
+title: activeShow.title,
+artist: "WKMG-DT1 NEWS 6",
+artwork: artworkUrl,
+comment: "Live MP3 Relay / 192K",
+timestamp: moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")
+};
+
+fs.writeFileSync(METADATA_FILE, JSON.stringify(currentMetadata, null, 2));
+log(`Metadata updated: ${currentMetadata.title}`);
+}
+
+// --- Start FFmpeg ---
 function startFFmpeg(meta) {
 if (ffmpegProcess) ffmpegProcess.kill("SIGKILL");
-
-console.log(`🎵 Starting FFmpeg for "${meta.title}"...`);
+audioStream = new PassThrough();
 
 ffmpegProcess = spawn(ffmpegPath, [
 "-re",
-"-i", streamUrl,
-"-filter:a", "volume=3.0", // louder volume
+"-i", STREAM_URL,
 "-vn",
+"-filter:a", "volume=3.0",
 "-acodec", "libmp3lame",
 "-b:a", "192k",
 "-f", "mp3",
 "-metadata", `title=${meta.title}`,
-"-metadata", `artist=${meta.artist}`,
 "-metadata", `comment=${meta.comment}`,
-"-metadata", `TPE1=${meta.artist}`,
-"-metadata", `TALB=${meta.title}`,
-"-metadata", `artwork=${meta.artwork}`,
+"-metadata", `artist=${meta.artist}`,
+"-metadata", `album=${meta.title}`,
 "pipe:1"
 ]);
 
-audioStream = new PassThrough();
 ffmpegProcess.stdout.pipe(audioStream, { end: false });
 
-ffmpegProcess.stderr.on("data", data => {
-const msg = data.toString();
-if (msg.includes("Metadata:")) console.log(`🧠 FFmpeg Metadata Updated → ${meta.title}`);
-});
-
-ffmpegProcess.on("exit", (code, signal) => {
-console.log(`⚠️ FFmpeg exited (code: ${code}, signal: ${signal})`);
-});
+ffmpegProcess.stderr.on("data", data => log(`FFmpeg: ${data.toString().trim()}`));
+ffmpegProcess.on("exit", (code, signal) => log(`FFmpeg exited (code: ${code}, signal: ${signal})`));
 }
 
-// 🧠 Load initial metadata (auto-detect active program)
-function loadInitialMetadata() {
-try {
-const metaFile = JSON.parse(fs.readFileSync(path.join(__dirname, "currentMetadata.json")));
-if (metaFile && metaFile.title) {
-currentMetadata = metaFile;
-console.log(`📡 Loaded metadata from currentMetadata.json → ${metaFile.title}`);
-return;
-}
-} catch {
-console.log("⚙️ No valid currentMetadata.json found, detecting active program from schedule...");
-}
-
-currentMetadata = getActiveShowFromSchedule();
-console.log(`🕓 Auto-detected initial program → ${currentMetadata.title}`);
-}
-
-loadInitialMetadata();
+// --- Auto-update metadata every 10 seconds ---
+updateMetadata();
 startFFmpeg(currentMetadata);
 
-// 🔊 Stream endpoint
-app.get("/wkmglive.mp3", (req, res) => {
-listenerCount++;
-console.log(`🎧 New listener connected | Total: ${listenerCount}`);
+setInterval(() => {
+const oldTitle = currentMetadata.title;
+updateMetadata();
+if (currentMetadata.title !== oldTitle) {
+log(`Show changed: restarting FFmpeg for "${currentMetadata.title}"`);
+startFFmpeg(currentMetadata);
+}
+}, 10000);
+
+// --- Client handler ---
+function handleClient(req, res) {
+const clientId = crypto.randomUUID();
+log(`Client connected: ${clientId} (${req.url})`);
 
 res.writeHead(200, {
 "Content-Type": "audio/mpeg",
@@ -128,64 +168,25 @@ res.writeHead(200, {
 "Connection": "keep-alive"
 });
 
-// Always refresh metadata for each new client
-startFFmpeg(currentMetadata);
+res.write(`ICY-MetaData: StreamTitle='${currentMetadata.title}';\n`);
 
 audioStream.pipe(res);
+
 req.on("close", () => {
-listenerCount--;
-console.log(`👋 Listener disconnected | Total: ${listenerCount}`);
+log(`Client disconnected: ${clientId}`);
 res.end();
 });
-});
-
-// 📄 Metadata JSON
-app.get("/metadata", (req, res) => {
-res.json({
-...currentMetadata,
-sessionId,
-traceLabel,
-startTimestamp,
-listenerCount
-});
-});
-
-// 🩺 Simple status page for debugging
-app.get("/status", (req, res) => {
-res.send(`
-<h2>WKMG Live Stream Status</h2>
-<p><strong>Now Playing:</strong> ${currentMetadata.title}</p>
-<p><strong>Station:</strong> ${currentMetadata.artist}</p>
-<p><strong>Listeners:</strong> ${listenerCount}</p>
-<p><strong>Updated:</strong> ${currentMetadata.timestamp}</p>
-<p><strong>Session:</strong> ${traceLabel}-${sessionId}</p>
-<img src="${currentMetadata.artwork}" alt="artwork" width="200"/>
-`);
-});
-
-// 🔁 Refresh metadata from file or schedule every second
-setInterval(() => {
-try {
-const meta = JSON.parse(fs.readFileSync("./currentMetadata.json"));
-if (JSON.stringify(meta) !== JSON.stringify(currentMetadata)) {
-console.log(`🔁 Metadata updated: ${meta.title}`);
-currentMetadata = meta;
-startFFmpeg(currentMetadata);
 }
-} catch {
-// fallback to live schedule detection if JSON missing
-const detected = getActiveShowFromSchedule();
-if (detected.title !== currentMetadata.title) {
-console.log(`📅 Auto-updated from schedule → ${detected.title}`);
-currentMetadata = detected;
-startFFmpeg(currentMetadata);
-}
-}
-}, 1000);
 
-// 🚀 Start server
+// --- Express endpoints ---
+app.get("/stream-wkmg.mp3", handleClient);
+app.get("/wkmglive.mp3", handleClient);
+app.get("/metadata", (req, res) => res.json(currentMetadata));
+app.get("/health", (req, res) => res.status(200).send("OK"));
+
+// --- Start server ---
 app.listen(PORT, HOST, () => {
-console.log(`✅ WKMG live at: http://${HOST}:${PORT}/wkmglive.mp3`);
-console.log(`ℹ️ Metadata: http://${HOST}:${PORT}/metadata`);
-console.log(`📊 Status: http://${HOST}:${PORT}/status`);
+log(`WKMG-DT1 Live Stream Available:`);
+log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
+log(`➡️ http://${HOST}:${PORT}/wkmglive.mp3`);
 });
