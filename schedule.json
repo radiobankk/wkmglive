@@ -1,9 +1,10 @@
 {
-"Monday_to_Friday": [
+"schedule": {
+"Monday": [
 { "time": "03:10", "title": "CBS News Roundup", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216982678929498/IMG_9250.png?ex=68f1b237&is=68f060b7&hm=6c3e8eeb879b1a9edd1f0e1c81ffe1c3f674247c8abcaf503ef66c9cba286cff&" },
 { "time": "04:30", "title": "CBS News Mornings", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216983773773968/IMG_9251.png?ex=68f1b237&is=68f060b7&hm=3173b53d93f96a8c065371ed7d98c9b476498e42bd107acfc463d801ddb2d789&" },
-{ "time": "05:00", "title": "News 6 Mornings at 5:00am", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216984578949221/IMG_9252.png?ex=68f1b238&is=68f060b8&hm=2c23602fd325d0a883fad981e3215934b19b716e892535ab60f923e72f05180f&" },
-{ "time": "06:00", "title": "News 6 Mornings at 6:00am", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216984578949221/IMG_9252.png?ex=68f1b238&is=68f060b8&hm=2c23602fd325d0a883fad981e3215934b19b716e892535ab60f923e72f05180f&" },
+{ "time": "05:00", "title": "News 6 Mornings at 5am", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216984578949221/IMG_9252.png?ex=68f1b238&is=68f060b8&hm=2c23602fd325d0a883fad981e3215934b19b716e892535ab60f923e72f05180f&" },
+{ "time": "06:00", "title": "News 6 Mornings at 6am", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216984578949221/IMG_9252.png?ex=68f1b238&is=68f060b8&hm=2c23602fd325d0a883fad981e3215934b19b716e892535ab60f923e72f05180f&" },
 { "time": "07:00", "title": "CBS Mornings", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428216985556226088/IMG_9253.png?ex=68f1b238&is=68f060b8&hm=68f326d18670ce081250cc9774664e2f59b68c626cff3bea1d0bfefd8f5f6a70&" },
 { "time": "09:00", "title": "Entertainment Tonight", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428217067491823730/IMG_9264.png?ex=68f1b24b&is=68f060cb&hm=05f10aa0fc5c56164ddd304b5325cd56f818e993b4f532d17107c3e350b28f67&" },
 { "time": "09:30", "title": "Inside Edition", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428217068020564059/IMG_9265.png?ex=68f1b24c&is=68f060cc&hm=c365a4e36ba9260b4132364d9953a358f7006d4e8cab4748c849fde873261aff&" },
@@ -35,5 +36,12 @@
 { "time": "02:08", "title": "Paid Programming", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428217070189023262/IMG_9273.png?ex=68f1b24c&is=68f060cc&hm=c8cfbf9dfe285b7d24677531b3bfa69cf1bef7b045124490b67ec85b3c8388d6&" },
 { "time": "02:38", "title": "Paid Programming", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428217070189023262/IMG_9273.png?ex=68f1b24c&is=68f060cc&hm=c8cfbf9dfe285b7d24677531b3bfa69cf1bef7b045124490b67ec85b3c8388d6&" },
 { "time": "03:08", "title": "Paid Programming", "artwork": "https://cdn.discordapp.com/attachments/1428212641083424861/1428217070189023262/IMG_9273.png?ex=68f1b24c&is=68f060cc&hm=c8cfbf9dfe285b7d24677531b3bfa69cf1bef7b045124490b67ec85b3c8388d6&" }
-]
+],
+"Tuesday": "same as Monday",
+"Wednesday": "same as Monday",
+"Thursday": "same as Monday",
+"Friday": "same as Monday",
+"Saturday": [],
+"Sunday": []
+}
 }
