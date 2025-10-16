@@ -1,66 +1,56 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const { PassThrough } = require("stream");
 const { spawn } = require("child_process");
 const ffmpegPath = require("ffmpeg-static");
 const cors = require("cors");
-const moment = require("moment-timezone");
 const crypto = require("crypto");
+const moment = require("moment-timezone");
 const scheduleData = require("./schedule.json");
 
-// -------------------- CONFIG --------------------
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 app.use(cors());
 
+// ------------------- Stream Info -------------------
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
 const sessionId = crypto.randomUUID();
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const traceLabel = `WKMG-Session-${sessionId}-${timestamp}`;
 
-console.log(`🧠 Starting WKMG stream trace: ${traceLabel}`);
+let audioStream = new PassThrough();
+let ffmpegProcess;
 
-// Initial metadata
-let currentMetadata = {
-title: "WKMG-DT1 NEWS 6",
-comment: "Live MP3 Relay / 192K",
-artwork: "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png?ex=68f25baf&is=68f10a2f&hm=373514a772bf78ebfcd1b4c6316a637a5eeac0005cf050907a151cdfadebf689&",
-station: "WKMG-DT1"
-};
-
-// -------------------- UTILITY --------------------
-function getCurrentProgram() {
+// ------------------- Helper: Get Current Metadata -------------------
+function getCurrentMetadata() {
 const now = moment().tz("America/New_York");
-const currentTime = now.format("HH:mm");
 const currentDay = now.format("dddd");
+const currentTime = now.format("HH:mm");
 
-// Resolve "same as Monday"
 const schedule = scheduleData.schedule;
 ["Tuesday", "Wednesday", "Thursday", "Friday"].forEach(day => {
 if (schedule[day] === "same as Monday") schedule[day] = schedule["Monday"];
 });
 
 const todaySchedule = Array.isArray(schedule[currentDay]) ? schedule[currentDay] : [];
-if (!todaySchedule.length) return currentMetadata;
+let activeProgram = todaySchedule[0] || { title: "Live Stream", artwork: "" };
 
-// Find the latest program that started before current time
-let activeProgram = todaySchedule[0];
-for (const program of todaySchedule) {
-if (program.time <= currentTime) activeProgram = program;
+for (const show of todaySchedule) {
+if (show.time <= currentTime) activeProgram = show;
 }
 
 return {
 title: activeProgram.title,
-comment: `Now Playing: ${activeProgram.title}`,
-artwork: activeProgram.artwork || currentMetadata.artwork,
-station: "WKMG-DT1"
+comment: `Now Playing: ${activeProgram.title} | WKMG-DT1`,
+artwork: activeProgram.artwork || "https://cdn.discordapp.com/attachments/1428212641083424861/1428217755752202260/IMG_9234.png?ex=68f25baf&is=68f10a2f&hm=373514a772bf78ebfcd1b4c6316a637a5eeac0005cf050907a151cdfadebf689&",
+station: "WKMG-DT1",
+timestamp: now.format("YYYY-MM-DD HH:mm:ss")
 };
 }
 
-// -------------------- STREAM --------------------
-let audioStream = new PassThrough();
-let ffmpegProcess;
-
+// ------------------- Start FFmpeg -------------------
 function startFFmpeg(meta) {
 if (ffmpegProcess) ffmpegProcess.kill("SIGKILL");
 
@@ -68,55 +58,67 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-re",
 "-i", streamUrl,
 "-vn",
+"-af", "volume=2.0", // Volume boost
 "-acodec", "libmp3lame",
 "-b:a", "192k",
-"-af", "volume=2.0", // <-- volume boost
 "-f", "mp3",
+"-metadata", `title=${meta.title}`,
+"-metadata", `comment=${meta.comment}`,
 "pipe:1"
 ]);
 
 ffmpegProcess.stdout.pipe(audioStream, { end: false });
-ffmpegProcess.stderr.on("data", data => console.log(data.toString()));
+
+ffmpegProcess.stderr.on("data", data => console.log(`FFmpeg: ${data.toString()}`));
 ffmpegProcess.on("exit", (code, signal) => console.log(`FFmpeg exited: ${code} | ${signal}`));
 }
 
+// Start initial FFmpeg
+let currentMetadata = getCurrentMetadata();
 startFFmpeg(currentMetadata);
 
-// -------------------- ENDPOINTS --------------------
-app.get("/stream-wkmg.mp3", (req, res) => {
+// ------------------- Metadata Updater -------------------
+setInterval(() => {
+const meta = getCurrentMetadata();
+const hasChanged = meta.title !== currentMetadata.title || meta.comment !== currentMetadata.comment || meta.artwork !== currentMetadata.artwork;
+
+if (hasChanged) {
+console.log(`[${meta.timestamp}] Updating metadata: ${meta.title}`);
+currentMetadata = meta;
+startFFmpeg(currentMetadata);
+}
+
+// Save current metadata to JSON for external access
+fs.writeFileSync(path.join(__dirname, "currentMetadata.json"), JSON.stringify(currentMetadata, null, 2));
+}, 1000); // every 1 second
+
+// ------------------- Stream Endpoints -------------------
+function attachStreamEndpoint(route) {
+app.get(route, (req, res) => {
 res.writeHead(200, {
 "Content-Type": "audio/mpeg",
 "Transfer-Encoding": "chunked",
 "Connection": "keep-alive"
 });
+
 audioStream.pipe(res);
+
 req.on("close", () => res.end());
 });
+}
 
-app.get("/wkmglive.mp3", (req, res) => {
-res.writeHead(200, {
-"Content-Type": "audio/mpeg",
-"Transfer-Encoding": "chunked",
-"Connection": "keep-alive"
-});
-audioStream.pipe(res);
-req.on("close", () => res.end());
-});
+attachStreamEndpoint("/stream-wkmg.mp3");
+attachStreamEndpoint("/wkmglive.mp3");
 
+// ------------------- Metadata Endpoint -------------------
 app.get("/metadata", (req, res) => {
-currentMetadata = getCurrentProgram();
 res.json(currentMetadata);
 });
 
-// -------------------- METADATA UPDATER --------------------
-setInterval(() => {
-currentMetadata = getCurrentProgram();
-}, 1000); // update every second
-
-// -------------------- SERVER --------------------
+// ------------------- Start Server -------------------
 app.listen(PORT, HOST, () => {
-console.log(`🎧 WKMG-DT1 MP3 stream available at:`);
+console.log(`🎧 WKMG MP3 streams running:`);
 console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
 console.log(`➡️ http://${HOST}:${PORT}/wkmglive.mp3`);
-console.log(`🟢 Metadata endpoint: http://${HOST}:${PORT}/metadata`);
+console.log(`📡 Metadata available at: http://${HOST}:${PORT}/metadata`);
 });
