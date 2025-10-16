@@ -135,5 +135,5 @@ app.listen(PORT, HOST, () => {
 console.log(`🎧 WKMG MP3 stream available at:`);
 console.log(`➡️ http://${HOST}:${PORT}/stream-wkmg.mp3`);
 console.log(`➡️ http://${HOST}:${PORT}/wkmglive.mp3`);
-console.log(`Metadata updates every 1 second from schedule.json`);
+console.log(`Metadata updates every 1 second from currentMetadata.json`);
 });
