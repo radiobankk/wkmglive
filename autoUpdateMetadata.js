@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 const scheduleData = require('./schedule.json');
 
 // Path to output metadata
-const metadataPath = path.join(__dirname, 'metadata.json');
+const metadataPath = path.join(__dirname, 'currentMetadata.json');
 
 // Default metadata if no program matches
 const defaultMetadata = {
