@@ -4,6 +4,8 @@ const { spawn } = require("child_process");
 const crypto = require("crypto");
 const cors = require("cors");
 const ffmpegPath = require("ffmpeg-static");
+const path = require("path");
+const fs = require("fs");
 const fullSchedule = require("./schedule.json").schedule;
 
 function getCurrentProgramMetadata() {
@@ -15,7 +17,6 @@ const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const today = dayNames[now.getDay()];
 let todaySchedule = fullSchedule[today];
 
-// Handle "same as Monday"
 if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
 const refDay = todaySchedule.split("same as ")[1];
 todaySchedule = fullSchedule[refDay];
@@ -23,7 +24,6 @@ todaySchedule = fullSchedule[refDay];
 
 if (!Array.isArray(todaySchedule)) return defaultMetadata();
 
-// Loop through slots and find the one where currentTime falls between this and the next
 for (let i = 0; i < todaySchedule.length; i++) {
 const currentSlot = todaySchedule[i];
 const nextSlot = todaySchedule[i + 1];
@@ -34,7 +34,8 @@ currentTime >= currentSlot.time &&
 ) {
 return {
 title: currentSlot.title,
-comment: `Now Playing: ${currentSlot.title}`
+comment: `Now Playing: ${currentSlot.title}`,
+artwork: currentSlot.artwork || "artwork/default.jpg"
 };
 }
 }
@@ -44,8 +45,9 @@ return defaultMetadata();
 
 function defaultMetadata() {
 return {
-title: "WKMG-DT1 NEWS 6",
-comment: "Live MP3 Relay / 192K"
+title: "WKMG-DT1",
+comment: "Live MP3 Relay / 192K",
+artwork: "artwork/default.jpg"
 };
 }
 
@@ -65,12 +67,13 @@ let audioStream = new PassThrough();
 let ffmpegProcess;
 let activeClients = 0;
 
-// 🎧 FFmpeg pipeline with WKMG branding
-function restartFFmpegWithMetadata(meta) {
-if (ffmpegProcess) {
-console.log(`🔁 Killing FFmpeg to restart with new metadata: ${meta.title}`);
-ffmpegProcess.kill("SIGKILL");
-}
+// 🎧 FFmpeg pipeline with WKMG branding and embedded artwork
+function startFFmpegOnceWithInitialMetadata() {
+const meta = getCurrentProgramMetadata();
+const artworkPath = path.resolve(__dirname, meta.artwork);
+
+// Fallback if artwork file doesn't exist
+const artworkInput = fs.existsSync(artworkPath) ? artworkPath : path.resolve(__dirname, "artwork/default.jpg");
 
 ffmpegProcess = spawn(ffmpegPath, [
 "-re",
@@ -78,12 +81,19 @@ ffmpegProcess = spawn(ffmpegPath, [
 "-rw_timeout", "15000000",
 "-loglevel", "verbose",
 "-i", streamUrl,
-"-vn", // ignore video
+"-i", artworkInput,
+"-map", "0:a",
+"-map", "1:v",
 "-acodec", "libmp3lame",
 "-b:a", "192k",
-"-f", "mp3",
+"-id3v2_version", "3",
 "-metadata", `title=${meta.title}`,
 "-metadata", `comment=${meta.comment}`,
+"-metadata", "artist=WKMG-DT1",
+"-metadata", "album=WKMG-DT1",
+"-metadata:s:v", "title=Album cover",
+"-metadata:s:v", "comment=Cover (front)",
+"-f", "mp3",
 "pipe:1"
 ]);
 
@@ -98,7 +108,7 @@ console.log(`❌ FFmpeg exited with code: ${code}, signal: ${signal}`);
 });
 }
 
-restartFFmpegWithMetadata(getCurrentProgramMetadata());
+startFFmpegOnceWithInitialMetadata();
 
 // 🔊 WKMG stream endpoint
 app.get("/stream-wkmg.mp3", (req, res) => {
@@ -113,7 +123,7 @@ res.writeHead(200, {
 "Connection": "keep-alive"
 });
 
-req.setTimeout(0); // Disable default timeout
+req.setTimeout(0);
 audioStream.pipe(res);
 
 req.on("close", () => {
@@ -164,7 +174,8 @@ app.get("/metadata", (req, res) => {
 const meta = getCurrentProgramMetadata();
 res.json({
 ...meta,
-album: meta.artist,
+album: "WKMG-DT1",
+artist: "WKMG-DT1",
 source: streamUrl,
 session: traceLabel,
 timestamp: new Date().toISOString(),
@@ -197,41 +208,6 @@ console.log(`🛑 [${traceLabel}] SIGTERM received. Terminating...`);
 audioStream.end();
 process.exit();
 });
-
-// ✅ Metadata watcher loop
-let lastTitle = "";
-let lastRestartTime = 0;
-
-setInterval(() => {
-const now = Date.now();
-const meta = getCurrentProgramMetadata();
-
-const isStreamActive = !audioStream.destroyed && ffmpegProcess.exitCode === null;
-
-// 🧠 Restart only if metadata changed AND stream is healthy AND cooldown passed
-if (
-meta.title !== lastTitle &&
-isStreamActive &&
-now - lastRestartTime > 60000
-) {
-console.log(`🔁 Title changed: "${lastTitle}" → "${meta.title}"`);
-lastTitle = meta.title;
-lastRestartTime = now;
-restartFFmpegWithMetadata(meta);
-}
-
-// 🛡️ If stream is dead, force restart
-if (!isStreamActive) {
-console.log(`🛑 Stream inactive. Restarting FFmpeg...`);
-lastRestartTime = now;
-restartFFmpegWithMetadata(meta);
-}
-}, 30000); // check every 30s
-
-setInterval(() => {
-const meta = getCurrentProgramMetadata();
-restartFFmpegWithMetadata(meta); // force metadata refresh
-}, 60000); // every 1 hour
 
 // ✅ Start server
 app.listen(PORT, HOST, () => {
