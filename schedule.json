@@ -3,8 +3,8 @@
 "Monday": [
 { "time": "03:10", "title": "CBS News Roundup" },
 { "time": "04:30", "title": "CBS News Mornings" },
-{ "time": "05:00", "title": "News 6 Mornings at 5:00am" },
-{ "time": "06:00", "title": "News 6 Mornings at 6:00am" },
+{ "time": "05:00", "title": "News 6 Mornings at 5am" },
+{ "time": "06:00", "title": "News 6 Mornings at 6am" },
 { "time": "07:00", "title": "CBS Mornings" },
 { "time": "09:00", "title": "Entertainment Tonight" },
 { "time": "09:30", "title": "Inside Edition" },

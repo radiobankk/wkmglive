@@ -1,83 +1,83 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const axios = require("axios");
 
 // Load schedule and artwork
-const scheduleData = require('./schedule.json');
-const artworkArray = require('./artwork.json').artwork;
+const schedule = require("./schedule.json").schedule;
+const artworkMap = require("./artwork.json");
 
-// Convert "HH:MM" to total minutes
-function toMinutes(t) {
-const [h, m] = t.split(':').map(Number);
-return h * 60 + m;
-}
+// Station metadata
+const station = {
+artist: "WKMG-DT1",
+comment: "ClickOrlando / News 6",
+genre: "Television"
+};
 
-// Get current program based on time
-function getCurrentProgram(schedule, time) {
-const nowMinutes = toMinutes(time);
-const sorted = schedule
-.map(entry => ({ ...entry, minutes: toMinutes(entry.time) }))
-.sort((a, b) => a.minutes - b.minutes);
+// Fallback block
+const fallback = {
+title: "We're Be Right Back!",
+artwork: artworkMap["We're Be Right Back!"]
+};
 
-let current = sorted[0];
-for (const entry of sorted) {
-if (entry.minutes <= nowMinutes) current = entry;
-else break;
-}
-return current;
-}
+// Commercial break logic
+const commercialBreakMinutes = [7, 14, 21, 28, 36, 44];
+const commercialArtwork = artworkMap["Commercial Break"];
 
-// Find artwork URL by title
-function getArtworkUrl(title) {
-const match = artworkArray.find(item => item.title === title);
-return match ? match.url : null;
-}
-
-// Inject metadata to backend (replace with your logic)
-function injectMetadata(title, artworkUrl) {
-console.log(`[${new Date().toISOString()}] Injecting: ${title}`);
-console.log(`Artwork: ${artworkUrl || 'None'}`);
-// Example: send to backend
-// fetch('http://your-backend/metadata', {
-// method: 'POST',
-// headers: { 'Content-Type': 'application/json' },
-// body: JSON.stringify({ title, artwork: artworkUrl })
-// });
-}
-
-// Write metadata to JSON file
-function writeMetadataFile(metadata) {
-const outputPath = path.join(__dirname, 'currentMetadata.json');
-fs.writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
-}
-
-// Main loop
-function updateMetadata() {
+// Get current time
 const now = new Date();
-const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
-const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+const day = now.toLocaleDateString("en-US", { weekday: "long" });
+const currentTime = now.toTimeString().slice(0, 5);
+const currentMinute = now.getMinutes();
 
-let todaySchedule = scheduleData.schedule[currentDay];
-if (typeof todaySchedule === 'string' && todaySchedule.includes('same as')) {
-const refDay = todaySchedule.split('same as ')[1];
-todaySchedule = scheduleData.schedule[refDay];
+// Resolve today's schedule
+let todaySchedule = schedule[day];
+if (typeof todaySchedule === "string" && todaySchedule.includes("same as")) {
+const refDay = todaySchedule.split("same as ")[1];
+todaySchedule = schedule[refDay];
 }
 
-if (Array.isArray(todaySchedule) && todaySchedule.length > 0) {
-const currentProgram = getCurrentProgram(todaySchedule, currentTime);
-const artworkUrl = getArtworkUrl(currentProgram.title);
-
-injectMetadata(currentProgram.title, artworkUrl);
-writeMetadataFile({
-time: currentTime,
-title: currentProgram.title,
-artwork: artworkUrl,
-day: currentDay,
-timestamp: now.toISOString()
-});
-} else {
-console.log(`No schedule found for ${currentDay}`);
+// Find current block
+let currentBlock = null;
+for (let i = 0; i < todaySchedule.length; i++) {
+const block = todaySchedule[i];
+const nextBlock = todaySchedule[i + 1];
+if (
+currentTime >= block.time &&
+(!nextBlock || currentTime < nextBlock.time)
+) {
+currentBlock = block;
+break;
 }
 }
 
-// Refresh every second
-setInterval(updateMetadata, 1000);
+// Determine metadata
+let metadata = {
+title: fallback.title,
+artist: station.artist,
+comment: station.comment,
+genre: station.genre,
+artwork: fallback.artwork
+};
+
+if (currentBlock) {
+const isCommercial = commercialBreakMinutes.includes(currentMinute);
+metadata.title = isCommercial ? "Commercial Break" : currentBlock.title;
+metadata.artwork = isCommercial
+? commercialArtwork
+: currentBlock.artwork || artworkMap[currentBlock.title] || fallback.artwork;
+}
+
+// Send to Icecast (example using axios)
+axios
+.get("http://localhost:8000/admin/metadata", {
+params: {
+mount: "/stream",
+mode: "updinfo",
+song: metadata.title
+},
+auth: {
+username: "wherejah",
+password: "Jjbutter12"
+}
+})
+.then(() => console.log("Metadata updated:", metadata.title))
+.catch((err) => console.error("Metadata update failed:", err.message));
