@@ -5,7 +5,7 @@ const { spawn } = require("child_process");
 const ffmpegPath = require("ffmpeg-static");
 
 // === Config ===
-const ICECAST_HOST = "localhost"; // Internal injection avoids WAF
+const ICECAST_HOST = "wkmglive.onrender.com"; // Internal injection avoids WAF
 const ICECAST_PORT = process.env.ICECAST_PORT || 8080;
 const ICECAST_USER = "source";
 const ICECAST_PASS = "Jjbutter12";
