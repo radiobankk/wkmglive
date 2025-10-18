@@ -5,10 +5,15 @@ const { spawn } = require("child_process");
 const ffmpegPath = require("ffmpeg-static");
 
 // === Config ===
-const ICECAST_HOST = process.env.ICECAST_HOST || "wkmglive.onrender.com";
+const ICECAST_HOST = "localhost"; // Internal injection avoids WAF
 const ICECAST_PORT = process.env.ICECAST_PORT || 8080;
 const ICECAST_USER = "source";
 const ICECAST_PASS = "Jjbutter12";
+
+const mounts = [
+{ path: "/wkmglive.mp3", genre: "Television" },
+{ path: "/stream-wkmg.mp3", genre: "Television" }
+];
 
 // === Load schedule and artwork ===
 const scheduleData = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
@@ -80,22 +85,13 @@ for (let i = 0; i < schedule.length; i++) {
 const current = schedule[i];
 const next = schedule[i + 1];
 if (time >= current.time && (!next || time < next.time)) {
-if (current.title === "Commercial Break") {
+const title = current.title;
 return {
-title: "Commercial Break",
-artist: "WKMG-DT1",
-comment: "ClickOrlando / News 6",
-genre: "Television",
-artwork: artworkMap["Commercial Break"] || fallback.artwork
-};
-}
-
-return {
-title: current.title,
+title,
 artist: fallback.artist,
 comment: fallback.comment,
 genre: fallback.genre,
-artwork: artworkMap[current.title] || fallback.artwork
+artwork: artworkMap[title] || fallback.artwork
 };
 }
 }
@@ -105,10 +101,9 @@ return fallback;
 
 function updateIcecastMetadata(meta) {
 const auth = Buffer.from(`${ICECAST_USER}:${ICECAST_PASS}`).toString("base64");
-const mounts = ["/wkmglive.mp3", "/stream-wkmg.mp3"];
 
-mounts.forEach(mount => {
-const query = `/admin/metadata?mount=${mount}&mode=updinfo&song=${encodeURIComponent(meta.title)}`;
+mounts.forEach(({ path }) => {
+const query = `/admin/metadata?mount=${path}&mode=updinfo&song=${encodeURIComponent(meta.title)}`;
 const options = {
 hostname: ICECAST_HOST,
 port: ICECAST_PORT,
@@ -118,18 +113,22 @@ headers: { Authorization: `Basic ${auth}` }
 };
 
 const req = http.request(options, res => {
-console.log(`🔁 Metadata updated: ${meta.title} → ${mount} | Status: ${res.statusCode}`);
+if (res.statusCode === 200) {
+console.log(`✅ Metadata updated: ${meta.title} → ${path}`);
+} else {
+console.warn(`⚠️ Metadata rejected: ${meta.title} → ${path} | Status: ${res.statusCode}`);
+}
 });
 
 req.on("error", error => {
-console.error(`❌ Metadata update failed for ${mount}:`, error.message);
+console.error(`❌ Metadata update failed for ${path}:`, error.message);
 });
 
 req.end();
 });
 }
 
-// === Start FFmpeg stream to both mounts ===
+// === Start FFmpeg stream ===
 const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
 const initialMeta = getCurrentMetadata();
 
@@ -146,7 +145,7 @@ const ffmpeg = spawn(ffmpegPath, [
 "-metadata", `artist=${initialMeta.artist}`,
 "-metadata", `comment=${initialMeta.comment}`,
 "-metadata", `genre=${initialMeta.genre}`,
-`[icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}/wkmglive.mp3|icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}/stream-wkmg.mp3]`
+`[icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[0].path}|icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[1].path}]`
 ]);
 
 ffmpeg.stderr.on("data", data => {
@@ -174,6 +173,14 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 app.get("/metadata", (req, res) => {
 res.json(getCurrentMetadata());
+});
+
+app.get("/health", (req, res) => {
+res.json({
+mounts: ["/wkmglive.mp3", "/stream-wkmg.mp3"],
+metadata: getCurrentMetadata(),
+timestamp: new Date().toISOString()
+});
 });
 
 app.listen(PORT, HOST, () => {

@@ -68,14 +68,14 @@ metadata.artwork = isCommercial
 
 // Send to Icecast (example using axios)
 axios
-.get("http://localhost:8000/admin/metadata", {
+.get("http://localhost:8080/admin/metadata", {
 params: {
 mount: "/stream",
 mode: "updinfo",
 song: metadata.title
 },
 auth: {
-username: "wherejah",
+username: "source",
 password: "Jjbutter12"
 }
 })
