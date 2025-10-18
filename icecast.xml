@@ -22,7 +22,7 @@
 </authentication>
 
 <listen-socket>
-<port>8080</port>
+<port>10000</port>
 <bind-address>0.0.0.0</bind-address>
 </listen-socket>
 

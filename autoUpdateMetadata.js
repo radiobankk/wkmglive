@@ -68,7 +68,7 @@ metadata.artwork = isCommercial
 
 // Send to Icecast (example using axios)
 axios
-.get("http://localhost:8080/admin/metadata", {
+.get("http://localhost:10000/admin/metadata", {
 params: {
 mount: "/stream",
 mode: "updinfo",

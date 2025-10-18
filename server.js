@@ -6,7 +6,7 @@ const ffmpegPath = require("ffmpeg-static");
 
 // === Config ===
 const ICECAST_HOST = "wkmglive.onrender.com"; // Internal injection avoids WAF
-const ICECAST_PORT = process.env.ICECAST_PORT || 8080;
+const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
 const ICECAST_USER = "source";
 const ICECAST_PASS = "Jjbutter12";
 
@@ -168,7 +168,7 @@ timestamp: new Date().toISOString()
 
 // === Express API ===
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 const HOST = process.env.HOST || "0.0.0.0";
 
 app.get("/metadata", (req, res) => {

@@ -1,14 +1,13 @@
-# Base image
+# Base image with Node.js
 FROM node:18
 
 # Install Icecast and FFmpeg
 RUN apt-get update && \
 apt-get install -y icecast2 ffmpeg && \
-mkdir -p /etc/icecast && \
-cp /usr/share/icecast2/icecast.xml /etc/icecast/icecast.xml
+mkdir -p /etc/icecast
 
-# Replace default Icecast config with your custom one
-COPY icecast.xml /etc/icecast/icecast.xml
+# Copy your custom Icecast config from the wkmglive folder
+COPY wkmglive/icecast.xml /etc/icecast/icecast.xml
 
 # Create app directory
 WORKDIR /app
@@ -19,7 +18,7 @@ RUN npm install
 COPY . .
 
 # Expose Icecast + Express API
-EXPOSE 8080
+EXPOSE 10000
 
 # Start Icecast and Node backend
 CMD icecast -c /etc/icecast/icecast.xml & node server.js
