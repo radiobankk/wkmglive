@@ -169,7 +169,7 @@ timestamp: new Date().toISOString()
 
 // === Express API ===
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const HOST = process.env.HOST || "0.0.0.0";
 
 app.get("/metadata", (req, res) => {
