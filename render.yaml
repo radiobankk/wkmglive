@@ -3,3 +3,8 @@ services:
 name: wkmglive
 env: docker
 plan: free
+dockerfilePath: ./Dockerfile
+autoDeploy: true
+ports:
+- port: 10000
+protocol: http
