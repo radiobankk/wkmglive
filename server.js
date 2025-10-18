@@ -7,7 +7,7 @@ const ffmpegPath = require("ffmpeg-static");
 // === Config ===
 const ICECAST_HOST = process.env.ICECAST_HOST || "wkmglive.onrender.com";
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
-const ICECAST_USER = "wherejah";
+const ICECAST_USER = "source";
 const ICECAST_PASS = "Jjbutter12";
 
 // === Load schedule and artwork ===
