@@ -4,6 +4,12 @@ const http = require("http");
 const { spawn } = require("child_process");
 const ffmpegPath = require("ffmpeg-static");
 
+// === Config ===
+const ICECAST_HOST = process.env.ICECAST_HOST || "wkmglive.onrender.com";
+const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
+const ICECAST_USER = "wherejah";
+const ICECAST_PASS = "Jjbutter12";
+
 // === Load schedule and artwork ===
 const scheduleData = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
 const artworkMap = fs.existsSync("artwork.json") ? require("./artwork.json") : {};
@@ -98,14 +104,14 @@ return fallback;
 }
 
 function updateIcecastMetadata(meta) {
-const auth = Buffer.from("source:wherejah").toString("base64");
+const auth = Buffer.from(`${ICECAST_USER}:${ICECAST_PASS}`).toString("base64");
 const mounts = ["/wkmglive.mp3", "/stream-wkmg.mp3"];
 
 mounts.forEach(mount => {
 const query = `/admin/metadata?mount=${mount}&mode=updinfo&song=${encodeURIComponent(meta.title)}`;
 const options = {
-hostname: "localhost",
-port: 8000,
+hostname: ICECAST_HOST,
+port: ICECAST_PORT,
 path: query,
 method: "GET",
 headers: { Authorization: `Basic ${auth}` }
@@ -140,7 +146,7 @@ const ffmpeg = spawn(ffmpegPath, [
 "-metadata", `artist=${initialMeta.artist}`,
 "-metadata", `comment=${initialMeta.comment}`,
 "-metadata", `genre=${initialMeta.genre}`,
-`[icecast://source:wherejah@localhost:8000/wkmglive.mp3|icecast://source:wherejah@localhost:8000/stream-wkmg.mp3]`
+`[icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}/wkmglive.mp3|icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}/stream-wkmg.mp3]`
 ]);
 
 ffmpeg.stderr.on("data", data => {
