@@ -161,7 +161,7 @@ const ffmpeg = spawn(ffmpegPath, [
 "-metadata", `artist=${initialMeta.artist}`,
 "-metadata", `comment=${initialMeta.comment}`,
 "-metadata", `genre=${initialMeta.genre}`,
-`[icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[0].path}|icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[1].path}]`
+`[f=icecast]icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[0].path}|icecast://${ICECAST_USER}:${ICECAST_PASS}@${ICECAST_HOST}:${ICECAST_PORT}${mounts[1].path}`
 ]);
 
 ffmpeg.stderr.on("data", data => {
