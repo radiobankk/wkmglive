@@ -4,7 +4,7 @@ const http = require("http");
 const { spawn } = require("child_process");
 
 // === Config ===
-const ffmpegPath = "ffmpeg"; // Use system binary
+const ffmpegPath = "ffmpeg";
 const ICECAST_HOST = "wkmglive.onrender.com";
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
 const ICECAST_USER = "wherejah";
@@ -147,10 +147,13 @@ const initialMeta = getCurrentMetadata();
 
 const ffmpeg = spawn(ffmpegPath, [
 "-re",
+"-probesize", "32M",
+"-analyzeduration", "10M",
 "-i", streamUrl,
-"-vn",
+"-map", "0:1",
 "-af", "volume=3.0",
 "-acodec", "libmp3lame",
+"-ar", "44100",
 "-b:a", "192k",
 "-f", "tee",
 "-content_type", "audio/mpeg",
