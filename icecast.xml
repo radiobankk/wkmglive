@@ -1,7 +1,12 @@
 <icecast>
+<changeowner>
+<user>nobody</user>
+<group>nogroup</group>
+</changeowner>
+
 <location>Orlando,FL</location>
 <admin>wherejah@icloud.com</admin>
-<hostname>localhost</hostname>
+<hostname>wkmglive.onrender.com</hostname>
 
 <!-- ✅ Enable admin interface for metadata injection -->
 <enable-admin>1</enable-admin>
@@ -49,17 +54,13 @@
 <logsize>10000</logsize>
 </logging>
 
-<!-- ✅ WKMG Mounts with per-mount authentication -->
+<!-- ✅ WKMG Mounts -->
 <mount>
 <mount-name>/wkmglive.mp3</mount-name>
 <public>1</public>
 <genre>Television</genre>
 <stream-name>WKMG-DT1</stream-name>
-<fallback-mount>/fallback.mp3</fallback-mount>
-<authentication type="mount">
-<username>wherejah</username>
-<password>Jjbutter12</password>
-</authentication>
+<fallback-mount>/stream-wkmg.mp3</fallback-mount>
 </mount>
 
 <mount>
@@ -67,10 +68,6 @@
 <public>1</public>
 <genre>Television</genre>
 <stream-name>WKMG-DT1</stream-name>
-<fallback-mount>/fallback.mp3</fallback-mount>
-<authentication type="mount">
-<username>wherejah</username>
-<password>Jjbutter12</password>
-</authentication>
+<fallback-mount>/wkmglive.mp3</fallback-mount>
 </mount>
 </icecast>
