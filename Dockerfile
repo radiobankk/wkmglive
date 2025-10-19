@@ -4,6 +4,7 @@ FROM node:18-slim
 # Install system ffmpeg and Icecast
 RUN apt-get update && \
 apt-get install -y ffmpeg icecast2 && \
+ln -s /usr/bin/icecast2 /usr/bin/icecast && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
@@ -16,7 +17,7 @@ COPY . .
 # Make start.sh executable
 RUN chmod +x ./start.sh
 
-# Expose your metadata API port
+# Expose Icecast and metadata API port
 EXPOSE 10000
 
 # Start Icecast and Node backend
