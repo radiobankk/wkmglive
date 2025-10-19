@@ -1,10 +1,19 @@
 #!/bin/bash
 
-# Start Icecast using correct binary path
-icecast -c ./icecast.xml &
-
-# Wait briefly to ensure Icecast is ready
+# Start Icecast
+icecast2 -c ./icecast.xml &
 sleep 2
 
-# Start your Node backend
+# Start FFmpeg to pull stream and write to wkmglive.mp3
+ffmpeg -re -i http://208.89.99.124:5004/auto/v6.1 \
+-map 0:1 -acodec libmp3lame -ar 44100 -b:a 192k \
+-f mp3 ./wkmglive.mp3 &
+
+# Wait for FFmpeg to start writing
+sleep 2
+
+# Start Ices2 to stream wkmglive.mp3 to Icecast
+ices2 ./ices-playback.xml &
+
+# Start Node backend
 node server.js

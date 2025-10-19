@@ -1,17 +1,16 @@
 # Use Node base image
 FROM node:18-slim
 
-# Install system ffmpeg and Icecast
+# Install FFmpeg, Icecast, and Ices2
 RUN apt-get update && \
-apt-get install -y ffmpeg icecast2 && \
-ln -s /usr/bin/icecast2 /usr/bin/icecast && \
+apt-get install -y ffmpeg icecast2 ices2 && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy project files including start.sh
+# Copy project files including start.sh and ices config
 COPY . .
 
 # Make start.sh executable
@@ -20,5 +19,5 @@ RUN chmod +x ./start.sh
 # Expose Icecast and metadata API port
 EXPOSE 10000
 
-# Start Icecast and Node backend
+# Start Icecast, FFmpeg, Ices2, and Node backend
 CMD ["./start.sh"]
