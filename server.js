@@ -7,7 +7,7 @@ const { spawn } = require("child_process");
 const ffmpegPath = "ffmpeg"; // Use system binary
 const ICECAST_HOST = "wkmglive.onrender.com";
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
-const ICECAST_USER = "source";
+const ICECAST_USER = "wherejah";
 const ICECAST_PASS = "Jjbutter12";
 
 const mounts = [
