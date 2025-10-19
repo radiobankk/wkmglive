@@ -7,7 +7,7 @@ apt-get install -y icecast2 ffmpeg && \
 mkdir -p /etc/icecast
 
 # Copy your custom Icecast config from the wkmglive folder
-COPY wkmg-stream/wkmglive/icecast.xml /etc/icecast/icecast.xml
+COPY stream-wkmg/wkmglive/icecast.xml /etc/icecast/icecast.xml
 
 # Create app directory
 WORKDIR /app
