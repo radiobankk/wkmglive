@@ -1,9 +1,8 @@
 FROM node:18
 
 RUN apt-get update && \
-apt-get install -y icecast2 ffmpeg && \
-echo "✅ Icecast installed" && \
-which icecast
+apt-get install -y ffmpeg icecast2 && \
+echo "✅ Installed ffmpeg and icecast2"
 
 WORKDIR /app
 COPY . .
