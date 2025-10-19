@@ -2,10 +2,10 @@ const express = require("express");
 const fs = require("fs");
 const http = require("http");
 const { spawn } = require("child_process");
-const ffmpegPath = require("ffmpeg-static");
 
 // === Config ===
-const ICECAST_HOST = "wkmglive.onrender.com"; // Internal injection avoids WAF
+const ffmpegPath = "ffmpeg"; // Use system binary
+const ICECAST_HOST = "wkmglive.onrender.com";
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
 const ICECAST_USER = "source";
 const ICECAST_PASS = "Jjbutter12";
@@ -16,8 +16,21 @@ const mounts = [
 ];
 
 // === Load schedule and artwork ===
-const scheduleData = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
-const artworkMap = fs.existsSync("artwork.json") ? require("./artwork.json") : {};
+let scheduleData = { schedule: {} };
+try {
+scheduleData = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
+} catch (err) {
+console.warn("⚠️ Failed to load schedule.json:", err.message);
+}
+
+const artworkMap = (() => {
+try {
+return require("./artwork.json");
+} catch {
+return {};
+}
+})();
+
 const fallback = {
 title: "We're Be Right Back!",
 artist: "WKMG-DT1",
@@ -152,6 +165,10 @@ ffmpeg.stderr.on("data", data => {
 console.log("FFmpeg:", data.toString());
 });
 
+ffmpeg.on("error", err => {
+console.error("❌ FFmpeg spawn error:", err.message);
+});
+
 ffmpeg.on("exit", (code, signal) => {
 console.log(`❌ FFmpeg exited: ${code} | ${signal}`);
 });
@@ -177,7 +194,7 @@ res.json(getCurrentMetadata());
 
 app.get("/health", (req, res) => {
 res.json({
-mounts: ["/wkmglive.mp3", "/stream-wkmg.mp3"],
+mounts: mounts.map(m => m.path),
 metadata: getCurrentMetadata(),
 timestamp: new Date().toISOString()
 });
