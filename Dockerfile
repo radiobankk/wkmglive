@@ -10,14 +10,14 @@ rm -rf /var/lib/apt/lists/*
 # Set working directory
 WORKDIR /app
 
-# Copy project files
+# Copy project files including start.sh
 COPY . .
 
-# Install dependencies
-RUN npm install
+# Make start.sh executable
+RUN chmod +x ./start.sh
 
 # Expose your metadata API port
 EXPOSE 10000
 
-# Start your backend and FFmpeg stream
-CMD ["node", "server.js"]
+# Start Icecast and Node backend
+CMD ["./start.sh"]
