@@ -7,8 +7,6 @@
 <location>Orlando,FL</location>
 <admin>wherejah@icloud.com</admin>
 <hostname>wkmglive.onrender.com</hostname>
-
-<!-- ✅ Enable admin interface for metadata injection -->
 <enable-admin>1</enable-admin>
 
 <limits>
@@ -54,7 +52,6 @@
 <logsize>10000</logsize>
 </logging>
 
-<!-- ✅ WKMG Mounts -->
 <mount>
 <mount-name>/wkmglive.mp3</mount-name>
 <public>1</public>
