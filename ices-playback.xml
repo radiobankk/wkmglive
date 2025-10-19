@@ -19,7 +19,7 @@
 <quality>0</quality>
 
 <server>
-<hostname>localhost</hostname>
+<hostname>wkmglive.onrender.com</hostname>
 <port>10000</port>
 <password>Jjbutter12</password>
 <user>source</user>
