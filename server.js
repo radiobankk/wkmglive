@@ -5,7 +5,7 @@ const { spawn } = require("child_process");
 
 // === Config ===
 const ffmpegPath = "ffmpeg";
-const ICECAST_HOST = "wkmglive.onrender.com";
+const ICECAST_HOST = "localhost"; // Internal container access
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
 const ICECAST_USER = "wherejah";
 const ICECAST_PASS = "Jjbutter12";
@@ -200,6 +200,18 @@ res.json({
 mounts: mounts.map(m => m.path),
 metadata: getCurrentMetadata(),
 timestamp: new Date().toISOString()
+});
+});
+
+app.get("/icecast-health", (req, res) => {
+http.get(`http://${ICECAST_HOST}:${ICECAST_PORT}`, response => {
+if (response.statusCode === 200) {
+res.status(200).send("✅ Icecast is alive");
+} else {
+res.status(500).send(`⚠️ Icecast responded with status ${response.statusCode}`);
+}
+}).on("error", err => {
+res.status(500).send(`❌ Icecast not reachable: ${err.message}`);
 });
 });
 
