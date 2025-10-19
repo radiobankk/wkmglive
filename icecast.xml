@@ -1,7 +1,7 @@
 <icecast>
 <changeowner>
-<user>nobody</user>
-<group>nogroup</group>
+<user>icecast</user>
+<group>icecast</group>
 </changeowner>
 
 <location>Orlando,FL</location>
