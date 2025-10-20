@@ -20,9 +20,14 @@ else
 echo "⚠️ Skipping health check — curl not installed"
 fi
 
-# Start FFmpeg to pull stream and write to file
+# Start FFmpeg to pull HLS stream and write to file with reconnect logic
 echo "🎧 Starting FFmpeg stream pull..."
-ffmpeg -re -i https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8 \
+ffmpeg -re \
+-timeout 5000000 \
+-reconnect 1 \
+-reconnect_streamed 1 \
+-reconnect_delay_max 2 \
+-i https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8 \
 -map 0:a -acodec libmp3lame -ar 44100 -b:a 192k \
 -f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1 &
 
