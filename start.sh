@@ -8,6 +8,7 @@ icecast2 -c ./icecast.xml &
 sleep 2
 
 # Confirm Icecast is listening
+if command -v curl > /dev/null; then
 echo "🔍 Checking Icecast health..."
 curl --silent --max-time 5 http://wkmglive.onrender.com:10000/status.xsl > /dev/null
 if [ $? -ne 0 ]; then
@@ -15,6 +16,9 @@ echo "❌ Icecast failed to start or is unreachable on port 10000"
 exit 1
 fi
 echo "✅ Icecast is live."
+else
+echo "⚠️ Skipping health check — curl not installed"
+fi
 
 # Start FFmpeg to pull stream and write to file
 echo "🎧 Starting FFmpeg stream pull..."
