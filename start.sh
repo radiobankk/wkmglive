@@ -10,7 +10,7 @@ sleep 2
 # Confirm Icecast is listening
 if command -v curl > /dev/null; then
 echo "🔍 Checking Icecast health..."
-curl --silent --max-time 5 http://localhost:10000/status.xsl > /dev/null
+curl --silent --max-time 5 http://wkmglive.onrender.com:10000/status.xsl > /dev/null
 if [ $? -ne 0 ]; then
 echo "❌ Icecast failed to start or is unreachable on port 10000"
 exit 1
@@ -27,7 +27,7 @@ ffmpeg -re \
 -reconnect 1 \
 -reconnect_streamed 1 \
 -reconnect_delay_max 2 \
--i https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8 \
+-i http://208.89.99.124:5004/auto/v6.1 \
 -map 0:a -acodec libmp3lame -ar 44100 -b:a 192k \
 -f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1 &
 
