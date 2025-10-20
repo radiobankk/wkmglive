@@ -4,13 +4,13 @@ echo "🚀 Starting WKMGLIVE Broadcast Backend..."
 
 # Start Icecast with privilege drop
 echo "📡 Launching Icecast..."
-icecast2 -c ./icecast.xml &
+su -s /bin/sh icecast -c "icecast2 -c ./icecast.xml" &
 sleep 2
 
 # Confirm Icecast is listening
 if command -v curl > /dev/null; then
 echo "🔍 Checking Icecast health..."
-curl --silent --max-time 5 http://wkmglive.onrender.com:10000/status.xsl > /dev/null
+curl --silent --max-time 5 http://localhost:10000/status.xsl > /dev/null
 if [ $? -ne 0 ]; then
 echo "❌ Icecast failed to start or is unreachable on port 10000"
 exit 1
