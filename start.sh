@@ -9,7 +9,7 @@ sleep 2
 
 # Confirm Icecast is listening
 echo "🔍 Checking Icecast health..."
-curl --silent --max-time 5 http://localhost:10000/status.xsl > /dev/null
+curl --silent --max-time 5 http://wkmglive.onrender.com:10000/status.xsl > /dev/null
 if [ $? -ne 0 ]; then
 echo "❌ Icecast failed to start or is unreachable on port 10000"
 exit 1
