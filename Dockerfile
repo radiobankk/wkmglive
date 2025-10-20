@@ -14,8 +14,10 @@ WORKDIR /app
 # Copy project files including start.sh and ices config
 COPY . .
 
-# Ensure required directories exist
-RUN mkdir -p /app/log /app/web /app/admin
+# Ensure required directories exist and set permissions for Icecast logging
+RUN mkdir -p /app/log /app/web /app/admin && \
+chown -R icecast:icecast /app/log && \
+chmod -R 755 /app/log
 
 # Make start.sh executable
 RUN chmod +x ./start.sh
