@@ -4,6 +4,7 @@ FROM node:18-slim
 # Install FFmpeg, Icecast, and Ices2
 RUN apt-get update && \
 apt-get install -y ffmpeg icecast2 ices2 && \
+adduser --disabled-password --gecos "" icecast && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
@@ -12,6 +13,9 @@ WORKDIR /app
 
 # Copy project files including start.sh and ices config
 COPY . .
+
+# Ensure required directories exist
+RUN mkdir -p /app/log /app/web /app/admin
 
 # Make start.sh executable
 RUN chmod +x ./start.sh

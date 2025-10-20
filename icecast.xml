@@ -22,7 +22,7 @@
 
 <authentication>
 <source-password>Jjbutter12</source-password>
-<relay-password>Jjbutter12</relay-password>
+<source-user>wherejah</source-user> <!-- Optional but explicit -->
 <admin-user>wherejah</admin-user>
 <admin-password>Jjbutter12</admin-password>
 </authentication>
