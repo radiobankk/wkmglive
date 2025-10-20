@@ -142,7 +142,7 @@ req.end();
 }
 
 // === Start FFmpeg stream ===
-const streamUrl = "http://208.89.99.124:5004/auto/v6.1";
+const streamUrl = "https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8";
 const initialMeta = getCurrentMetadata();
 
 const ffmpeg = spawn(ffmpegPath, [

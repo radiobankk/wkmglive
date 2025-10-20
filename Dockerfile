@@ -1,9 +1,9 @@
 # Use Node base image
 FROM node:18-slim
 
-# Install FFmpeg, Icecast, Ices2, and curl
+# Install FFmpeg, Icecast, Ices2, curl, and procps (for ps command)
 RUN apt-get update && \
-apt-get install -y ffmpeg icecast2 ices2 curl && \
+apt-get install -y ffmpeg icecast2 ices2 curl procps && \
 id -u icecast >/dev/null 2>&1 || adduser --disabled-password --gecos "" --ingroup icecast icecast && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*

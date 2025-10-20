@@ -22,7 +22,7 @@ fi
 
 # Start FFmpeg to pull stream and write to file
 echo "🎧 Starting FFmpeg stream pull..."
-ffmpeg -re -i http://208.89.99.124:5004/auto/v6.1 \
+ffmpeg -re -i https://dvrfl03.bozztv.com/hondu-cbsorlando/index.m3u8 \
 -map 0:a -acodec libmp3lame -ar 44100 -b:a 192k \
 -f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1 &
 
