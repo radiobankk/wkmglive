@@ -2,17 +2,21 @@
 
 echo "🚀 Starting WKMGLIVE Broadcast Backend..."
 
-# Start Icecast with privilege drop
+# Trap to clean up background processes on exit
+trap 'kill $(jobs -p)' EXIT
+
+# Start Icecast with privilege drop and log output
 echo "📡 Launching Icecast..."
-su -s /bin/sh icecast -c "icecast2 -c ./icecast.xml" &
+su -s /bin/sh icecast -c "icecast2 -c ./icecast.xml" > ./log/icecast.log 2>&1 &
 sleep 2
 
-# Confirm Icecast is listening
-if command -v curl > /dev/null; then
+# Confirm Icecast is listening internally
 echo "🔍 Checking Icecast health..."
-curl --silent --max-time 5 http://wkmglive.onrender.com:10000/status.xsl > /dev/null
+if command -v curl > /dev/null; then
+curl --silent --max-time 5 http://localhost:10000/status.xsl > /dev/null
 if [ $? -ne 0 ]; then
 echo "❌ Icecast failed to start or is unreachable on port 10000"
+tail -n 20 ./log/icecast.log
 exit 1
 fi
 echo "✅ Icecast is live."
@@ -20,9 +24,9 @@ else
 echo "⚠️ Skipping health check — curl not installed"
 fi
 
-# Start FFmpeg to pull HLS stream and write to file with reconnect logic
+# Start FFmpeg to pull stream and write to file with reconnect logic
 echo "🎧 Starting FFmpeg stream pull..."
-ffmpeg -re \
+ffmpeg -nostdin -loglevel warning -re \
 -timeout 5000000 \
 -reconnect 1 \
 -reconnect_streamed 1 \
