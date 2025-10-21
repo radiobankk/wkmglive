@@ -5,6 +5,14 @@
 <loglevel>3</loglevel>
 <consolelog>1</consolelog>
 
+<input>
+<module>playlist</module>
+<param name="type">basic</param>
+<param name="file">/app/audio/stream.m3u</param>
+<param name="random">0</param>
+<param name="restart-after-reread">1</param>
+</input>
+
 <stream>
 <mount>/wkmglive.mp3</mount>
 <name>WKMG-DT1</name>
@@ -19,13 +27,12 @@
 <quality>0</quality>
 
 <server>
-<hostname>wkmglive.onrender.com</hostname>
+<hostname>localhost</hostname> <!-- Use localhost inside container -->
 <port>10000</port>
 <password>Jjbutter12</password>
-<user>wherejah</user>
+<user>source</user> <!-- Icecast expects 'source' here -->
 </server>
 
-<file>./wkmglive.mp3</file>
 <type>mp3</type>
 </stream>
 </ices>
