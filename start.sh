@@ -58,3 +58,6 @@ echo "🧠 Starting metadata backend..."
 node server.js > ./log/server.log 2>&1 &
 
 echo "✅ All services launched. Logs available in ./log/"
+
+# Keep container alive
+wait
