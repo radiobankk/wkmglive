@@ -6,7 +6,7 @@ const request = require("request");
 
 // === Config ===
 const ffmpegPath = "ffmpeg";
-const ICECAST_HOST = "wkmglive.onrender.com"; // Internal container access
+const ICECAST_HOST = "localhost"; // Internal container access
 const ICECAST_PORT = process.env.ICECAST_PORT || 10000;
 const ICECAST_USER = "wherejah";
 const ICECAST_PASS = "Jjbutter12";

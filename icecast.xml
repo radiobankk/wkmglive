@@ -6,7 +6,7 @@
 
 <location>Orlando,FL</location>
 <admin>wherejah@icloud.com</admin>
-<hostname>wkmglive.onrender.com</hostname>
+<hostname>localhost</hostname>
 <enable-admin>1</enable-admin>
 
 <limits>
