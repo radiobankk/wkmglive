@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const http = require("http");
 const { spawn } = require("child_process");
+const request = require("request");
 
 // === Config ===
 const ffmpegPath = "ffmpeg";
@@ -191,6 +192,15 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const HOST = process.env.HOST || "0.0.0.0";
 
+// ✅ Proxy Icecast stream through backend
+app.get("/stream", (req, res) => {
+const icecastUrl = `http://localhost:${ICECAST_PORT}${mounts[0].path}`;
+req.pipe(request(icecastUrl)).on("error", err => {
+console.error("❌ Stream proxy error:", err.message);
+res.status(500).send("Stream unavailable");
+}).pipe(res);
+});
+
 app.get("/metadata", (req, res) => {
 res.json(getCurrentMetadata());
 });
@@ -204,17 +214,4 @@ timestamp: new Date().toISOString()
 });
 
 app.get("/icecast-health", (req, res) => {
-http.get(`http://${ICECAST_HOST}:${ICECAST_PORT}`, response => {
-if (response.statusCode === 200) {
-res.status(200).send("✅ Icecast is alive");
-} else {
-res.status(500).send(`⚠️ Icecast responded with status ${response.statusCode}`);
-}
-}).on("error", err => {
-res.status(500).send(`❌ Icecast not reachable: ${err.message}`);
-});
-});
-
-app.listen(PORT, HOST, () => {
-console.log(`📡 Metadata API running at http://${HOST}:${PORT}`);
-});
+http.get(`http://${ICECAST_HOST}:${ICECAST_PORT}`, response =>
