@@ -5,14 +5,6 @@
 <loglevel>3</loglevel>
 <consolelog>1</consolelog>
 
-<input>
-<module>playlist</module>
-<param name="type">basic</param>
-<param name="file">/app/audio/stream.m3u</param>
-<param name="random">0</param>
-<param name="restart-after-reread">1</param>
-</input>
-
 <stream>
 <mount>/wkmglive.mp3</mount>
 <name>WKMG-DT1</name>
@@ -20,19 +12,24 @@
 <description>ClickOrlando / News 6</description>
 <url>http://clickorlando.com</url>
 <public>1</public>
-
 <bitrate>192</bitrate>
 <samplerate>44100</samplerate>
 <channels>2</channels>
 <quality>0</quality>
-
 <server>
-<hostname>localhost</hostname> <!-- Use localhost inside container -->
+<hostname>localhost</hostname>
 <port>10000</port>
 <password>Jjbutter12</password>
-<user>source</user> <!-- Icecast expects 'source' here -->
+<user>source</user>
 </server>
-
 <type>mp3</type>
 </stream>
+
+<input>
+<module>playlist</module>
+<param name="type">basic</param>
+<param name="file">/app/audio/stream.m3u</param>
+<param name="random">0</param>
+<param name="restart-after-reread">1</param>
+</input>
 </ices>
