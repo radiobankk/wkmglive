@@ -24,25 +24,36 @@ else
 echo "⚠️ Skipping health check — curl not installed"
 fi
 
-# Start FFmpeg to pull stream and write to file with reconnect logic
+# Check upstream stream availability
+echo "🔎 Checking upstream stream availability..."
+if ! curl --silent --head --fail http://208.89.99.124:5004/auto/v6.1 > /dev/null; then
+echo "❌ Upstream stream is unreachable. Skipping FFmpeg launch."
+exit 1
+fi
+
+# Start FFmpeg with retry logic
 echo "🎧 Starting FFmpeg stream pull..."
-ffmpeg -nostdin -loglevel warning -re \
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+until ffmpeg -nostdin -loglevel info -re \
 -timeout 5000000 \
 -reconnect 1 \
 -reconnect_streamed 1 \
 -reconnect_delay_max 2 \
 -i http://208.89.99.124:5004/auto/v6.1 \
 -map 0:a -acodec libmp3lame -ar 44100 -b:a 192k \
--f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1 &
+-f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1; do
 
-FFMPEG_PID=$!
-sleep 2
-
-# Monitor FFmpeg health
-if ! ps -p $FFMPEG_PID > /dev/null; then
-echo "❌ FFmpeg exited unexpectedly. Check ./log/ffmpeg.log"
+RETRY_COUNT=$((RETRY_COUNT+1))
+echo "⚠️ FFmpeg failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying in 5s..."
+sleep 5
+if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+echo "❌ FFmpeg failed after $MAX_RETRIES attempts. Check ./log/ffmpeg.log"
 exit 1
 fi
+done
+
 echo "✅ FFmpeg is running."
 
 # Start Ices2 to stream MP3 file to Icecast
@@ -60,4 +71,4 @@ node server.js > ./log/server.log 2>&1 &
 echo "✅ All services launched. Logs available in ./log/"
 
 # Keep container alive
-wait
+while true; do sleep 60; done
