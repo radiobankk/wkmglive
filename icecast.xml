@@ -1,9 +1,3 @@
-<icecast>
-<changeowner>
-<user>icecast</user>
-<group>icecast</group>
-</changeowner>
-
 <location>Orlando,FL</location>
 <admin>wherejah@icloud.com</admin>
 <hostname>wkmglive.onrender.com</hostname>
