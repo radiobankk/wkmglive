@@ -21,7 +21,7 @@ until ffmpeg -nostdin -loglevel info -re \
 -reconnect_streamed 1 \
 -reconnect_delay_max 2 \
 -i http://208.89.99.124:5004/auto/v6.1 \
--map 0:a -acodec libmp3lame -ar 44100 -b:a 192k \
+-map 0:1 -ac 2 -acodec libmp3lame -ar 44100 -b:a 192k \
 -f mp3 ./wkmglive.mp3 > ./log/ffmpeg.log 2>&1; do
 
 RETRY_COUNT=$((RETRY_COUNT+1))
